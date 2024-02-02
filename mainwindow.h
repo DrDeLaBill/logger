@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "usbcontroller.h"
+#include "Modules/USBController/usbcontroller.h"
 
 
 QT_BEGIN_NAMESPACE

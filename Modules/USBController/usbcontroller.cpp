@@ -7,9 +7,7 @@
 #include <libusb.h>
 
 #include "mainwindow.h"
-#include "hidservice.h"
-#include "app_exception.h"
-#include "USB_HID_Table.h"
+#include "Modules/Exceptions/app_exception.h"
 
 
 USBController::USBController()
@@ -28,28 +26,32 @@ USBController::~USBController()
     workerThread.wait();
 }
 
-void USBController::search()
+void USBController::proccess(const QString& parameter)
 {
-    emit operate("search");
+    operate(parameter);
 }
 
-void USBController::handleResults(const QString &parameter)
+void USBController::handleResults(const QString& parameter)
 {
-    std::cout << "SUCCESS" << std::endl;
-    std::cout << parameter.toStdString() << std::endl;
     MainWindow::setBytesLabel("SUCCESS");
 }
 
-void USBWorker::doWork(const QString &parameter)
+void USBWorker::doWork(const QString& parameter)
 {
     std::cout << parameter.toStdString() << std::endl;
 
     try {
-        HIDService::init();
+        auto handler = handlers.find(parameter);
 
-        while (!HIDService::isDeviceConnected(HID_VENDOR_ID, HID_PRODUCT_ID));
+        if (handler == handlers.end()) {
+            throw new exceptions::UsbUndefinedBehaviourException("INTERNAL_ERROR"); // TODO: list of user's errors (errors that shows for user)
+        }
 
-        HIDService::deinit();
+        auto lambda = [&] (auto& hndl) {
+            hndl.operate();
+        };
+
+        std::visit(lambda, handler->second);
 
         emit resultReady(parameter);
     } catch (const exceptions::ExceptionBase& exc) {

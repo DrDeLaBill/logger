@@ -2,10 +2,33 @@
 #define USBHANDLER_H
 
 
-struct USBHandlerBase {};
+#include <QString>
 
-struct USBSearchHandler: public USBHandlerBase {};
-struct USBReportHandler: public USBHandlerBase {};
+
+struct USBHandlerEqual
+{
+    bool operator()(const QString& lhs, const QString& rhs) const;
+};
+
+struct USBHandlerHash
+{
+    std::size_t operator()(const QString& key) const
+    {
+        return std::hash<std::string>{}(key.toStdString());
+    }
+};
+
+struct USBSearchHandler
+{
+    void operate();
+    void handlerResults();
+};
+
+struct USBReportHandler
+{
+    void operate();
+    void handlerResults();
+};
 
 
 #endif // USBHANDLER_H

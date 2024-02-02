@@ -21,10 +21,11 @@ namespace exceptions
         std::string message;
     };
 
-    struct InternalErrorException: public ExceptionBase {InternalErrorException(const std::string& message): ExceptionBase(message) {}};
-    struct UsbInitException:       public ExceptionBase {UsbInitException(const std::string& message): ExceptionBase(message) {}};
-    struct UsbDeinitException:     public ExceptionBase {UsbDeinitException(const std::string& message): ExceptionBase(message) {}};
-    struct UsbNotFoundException:   public ExceptionBase {UsbNotFoundException(const std::string& message): ExceptionBase(message) {}};
+    struct InternalErrorException:         public ExceptionBase {InternalErrorException(const std::string& message): ExceptionBase(message) {}};
+    struct UsbInitException:               public ExceptionBase {UsbInitException(const std::string& message): ExceptionBase(message) {}};
+    struct UsbDeinitException:             public ExceptionBase {UsbDeinitException(const std::string& message): ExceptionBase(message) {}};
+    struct UsbNotFoundException:           public ExceptionBase {UsbNotFoundException(const std::string& message): ExceptionBase(message) {}};
+    struct UsbUndefinedBehaviourException: public ExceptionBase {UsbUndefinedBehaviourException(const std::string& message): ExceptionBase(message) {}};
 }
 
 #endif // EXCEPTIONS_H
