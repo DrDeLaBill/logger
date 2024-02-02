@@ -12,10 +12,7 @@ struct USBHandlerEqual
 
 struct USBHandlerHash
 {
-    std::size_t operator()(const QString& key) const
-    {
-        return std::hash<std::string>{}(key.toStdString());
-    }
+    std::size_t operator()(const QString& key) const;
 };
 
 struct USBSearchHandler
