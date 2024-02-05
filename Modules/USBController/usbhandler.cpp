@@ -14,7 +14,7 @@ std::size_t USBHandlerHash::operator()(const QString& key) const
     return std::hash<std::string>{}(key.toStdString());
 }
 
-void USBSearchHandler::operate()
+void USBSearchHandler::operate() const
 {
     HIDService::init();
 
@@ -23,9 +23,11 @@ void USBSearchHandler::operate()
     HIDService::deinit();
 }
 
-void USBReportHandler::operate()
+void USBReportHandler::operate() const
 {
     HIDService::init();
+
+    HIDService::showReport(HID_VENDOR_ID, HID_PRODUCT_ID);
 
     HIDService::deinit();
 }

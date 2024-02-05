@@ -2,13 +2,13 @@
 
 #include <libusb.h>
 
-#include "app_exception.h"
+#include "Modules/Exceptions/app_exception.h"
 
 
 void HIDService::init()
 {
     if (libusb_init(NULL) != 0) {
-        throw new exceptions::UsbInitException("Unable to initialize USB");
+        throw new exceptions::UsbInitException();
     }
 }
 
@@ -27,8 +27,10 @@ void HIDService::showReport(uint16_t vendorId, uint16_t productId)
 {
     libusb_device* dev = nullptr;
     if (!findDevice(dev, vendorId, productId)) {
-        throw new exceptions::UsbNotFoundException("Device not found");
+        throw new exceptions::UsbNotFoundException();
     }
+
+
 }
 
 bool HIDService::findDevice(libusb_device *dev, uint16_t vendorId, uint16_t productId)

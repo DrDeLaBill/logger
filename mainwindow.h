@@ -23,6 +23,7 @@ public:
     ~MainWindow();
 
     static void setBytesLabel(const QString& str);
+    static void setError(const QString& str);
 
 private:
     static std::unique_ptr<Ui::MainWindow> ui;

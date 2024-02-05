@@ -10,7 +10,7 @@
 #include "Modules/Exceptions/app_exception.h"
 
 
-USBController::USBController()
+USBController::USBController(): curParameter("")
 {
     USBWorker *worker = new USBWorker;
     worker->moveToThread(&workerThread);
@@ -28,26 +28,39 @@ USBController::~USBController()
 
 void USBController::proccess(const QString& parameter)
 {
+    curParameter = parameter;
     operate(parameter);
 }
 
 void USBController::handleResults(const QString& parameter)
 {
-    MainWindow::setBytesLabel("SUCCESS");
+    std::cout << "result: " << parameter.toStdString() << std::endl;
+
+    if (parameter == curParameter) {
+        MainWindow::setBytesLabel(parameter);
+    } else {
+        MainWindow::setError(parameter);
+    }
+
+    if (parameter == USB_SEARCH_HANDLER || parameter == USB_REPORT_HANDLER) {
+        proccess(USB_REPORT_HANDLER);
+    } else if (parameter == exceptions::USBExceptionGroup().message) {
+        proccess(USB_SEARCH_HANDLER);
+    }
 }
 
 void USBWorker::doWork(const QString& parameter)
 {
-    std::cout << parameter.toStdString() << std::endl;
+    std::cout << "request: " << parameter.toStdString() << std::endl;
 
     try {
         auto handler = handlers.find(parameter);
 
         if (handler == handlers.end()) {
-            throw new exceptions::UsbUndefinedBehaviourException("INTERNAL_ERROR"); // TODO: list of user's errors (errors that shows for user)
+            throw new exceptions::UsbUndefinedBehaviourException(); // TODO: list of user's errors (errors that shows for user)
         }
 
-        auto lambda = [&] (auto& hndl) {
+        auto lambda = [&] (const auto& hndl) {
             hndl.operate();
         };
 
@@ -55,15 +68,11 @@ void USBWorker::doWork(const QString& parameter)
 
         emit resultReady(parameter);
     } catch (const exceptions::ExceptionBase& exc) {
-        // TODO: alert and crash
-        throw new exceptions::ExceptionBase("лох"); // TODO: normal message
-        emit resultReady("USB_CONNECT_ERROR");
+        // TODO: log error -> exc.what()
+        emit resultReady(exc.groupMessage());
     } catch (const exceptions::ExceptionBase* exc) {
-        // TODO: alert and crash
-        throw new exceptions::ExceptionBase("лох"); // TODO: normal message
-        emit resultReady("USB_CONNECT_ERROR");
+        emit resultReady(exc->groupMessage());
     } catch (...) {
-        throw new exceptions::ExceptionBase("неизвестный лох"); // TODO: normal message
-        emit resultReady("INTERNAL_ERROR");
+        emit resultReady(exceptions::InternalErrorException().groupMessage());
     }
 }

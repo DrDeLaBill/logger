@@ -56,11 +56,13 @@ class USBController : public QObject
 private:
     static constexpr char TAG[] = "USB";
 
+    QString curParameter;
+
 public:
     USBController();
     ~USBController();
 
-    void proccess(const QString& parameter);
+    void proccess(const QString& parameter = USB_SEARCH_HANDLER);
 
 public slots:
     void handleResults(const QString& parameter);
