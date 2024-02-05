@@ -24,7 +24,8 @@ public:
     static std::unique_ptr<uint8_t> getReport(uint16_t vendorId, uint16_t productId);
 
 private:
-    static bool findDevice(libusb_device* desc, uint16_t vendorId, uint16_t productId);
+    static bool checkDevice(uint16_t vendorId, uint16_t productId);
+    static libusb_device* findDevice(libusb_device **devs, uint16_t vendorId, uint16_t productId);
 };
 
 #endif // HIDSERVICE_H

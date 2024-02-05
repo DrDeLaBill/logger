@@ -60,8 +60,8 @@ void USBWorker::doWork(const QString& parameter)
             throw new exceptions::UsbUndefinedBehaviourException(); // TODO: list of user's errors (errors that shows for user)
         }
 
-        auto lambda = [&] (const auto& hndl) {
-            hndl.operate();
+        auto lambda = [] (const auto& handler) {
+            handler.operate();
         };
 
         std::visit(lambda, handler->second);

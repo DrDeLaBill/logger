@@ -56,6 +56,11 @@ namespace exceptions
         InternalErrorException(): ExceptionBase("INTERNAL_ERROR", InternallExceptionGroup()) {}
     };
 
+    struct UsbException: public ExceptionBase
+    {
+        UsbException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}
+    };
+
     struct UsbInitException: public ExceptionBase
     {
         UsbInitException(): ExceptionBase("USB_INIT_ERROR", USBExceptionGroup()) {}
@@ -74,6 +79,11 @@ namespace exceptions
     struct UsbUndefinedBehaviourException: public ExceptionBase
     {
         UsbUndefinedBehaviourException(): ExceptionBase("USB_UNDEF_BEHAVIOUR_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct UsbReportException: public ExceptionBase
+    {
+        UsbReportException(): ExceptionBase("USB_REPORT_ERROR", USBExceptionGroup()) {}
     };
     /* Exceptions end */
 }
