@@ -56,9 +56,19 @@ namespace exceptions
         InternalErrorException(): ExceptionBase("INTERNAL_ERROR", InternallExceptionGroup()) {}
     };
 
+    struct TemplateErrorException: public ExceptionBase
+    {
+        TemplateErrorException(): ExceptionBase("TEMPLATE_ERROR", InternallExceptionGroup()) {}
+    };
+
     struct UsbException: public ExceptionBase
     {
         UsbException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct UsbTimeoutException: public ExceptionBase
+    {
+        UsbTimeoutException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}
     };
 
     struct UsbInitException: public ExceptionBase

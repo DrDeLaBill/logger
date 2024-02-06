@@ -1,7 +1,7 @@
 #include "usbhandler.h"
 
 #include "Modules/HIDService/hidservice.h"
-#include "Modules/USB_HID_Table/USB_HID_Table.h"
+#include "Modules/HIDTable/HIDController.h"
 
 
 bool USBHandlerEqual::operator()(const QString& lhs, const QString& rhs) const
@@ -27,7 +27,16 @@ void USBReportHandler::operate() const
 {
     HIDService::init();
 
-    HIDService::showReport(HID_VENDOR_ID, HID_PRODUCT_ID);
+    HIDService::loadReport(HID_VENDOR_ID, HID_PRODUCT_ID);
+
+    HIDService::deinit();
+}
+
+void USBCGetharacteristicHandler::operate() const
+{
+    HIDService::init();
+
+    HIDService::loadReport(HID_VENDOR_ID, HID_PRODUCT_ID);
 
     HIDService::deinit();
 }

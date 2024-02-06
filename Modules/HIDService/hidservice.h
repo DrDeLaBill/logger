@@ -19,7 +19,8 @@ public:
 
     static bool isDeviceConnected(uint16_t vendorId, uint16_t productId);
 
-    static void showReport(uint16_t vendorId, uint16_t productId);
+    static void loadReport(uint16_t vendorId, uint16_t productId);
+    static void sendReport(uint16_t vendorId, uint16_t productId, const uint8_t* report);
     static unsigned getReportSize(uint16_t vendorId, uint16_t productId);
     static std::unique_ptr<uint8_t> getReport(uint16_t vendorId, uint16_t productId);
 

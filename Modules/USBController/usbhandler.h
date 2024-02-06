@@ -18,13 +18,16 @@ struct USBHandlerHash
 struct USBSearchHandler
 {
     void operate() const;
-    void handlerResults();
 };
 
 struct USBReportHandler
 {
     void operate() const;
-    void handlerResults();
+};
+
+struct USBCGetharacteristicHandler
+{
+    void operate() const;
 };
 
 

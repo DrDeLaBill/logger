@@ -6,6 +6,7 @@
 
 #include <libusb.h>
 
+#include "Modules/USBController/usbdreport.h"
 #include "Modules/Exceptions/app_exception.h"
 
 
@@ -14,7 +15,6 @@ void HIDService::init()
     if (libusb_init(NULL) != 0) {
         throw new exceptions::UsbInitException();
     }
-//    libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_DEBUG);
 }
 
 void HIDService::deinit()
@@ -27,7 +27,7 @@ bool HIDService::isDeviceConnected(uint16_t vendorId, uint16_t productId)
     return checkDevice(vendorId, productId);
 }
 
-void HIDService::showReport(uint16_t vendorId, uint16_t productId)
+void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
 {
     libusb_device **devs = NULL;
     if (libusb_get_device_list(NULL, &devs) <= 0) {
@@ -47,13 +47,15 @@ void HIDService::showReport(uint16_t vendorId, uint16_t productId)
         throw new exceptions::UsbNotFoundException();
     }
 
-    struct libusb_device_descriptor dev_desc;
+    struct libusb_device_descriptor dev_desc; // TODO: get descriptor from findDevice func
     if (libusb_get_device_descriptor(dev, &dev_desc) != 0) {
         libusb_free_device_list(devs, 1);
         throw new exceptions::UsbReportException();
     }
 
-    std::unique_ptr<uint8_t[]> report = std::make_unique<uint8_t[]>(dev_desc.bLength);
+    std::shared_ptr<uint8_t[]> report = std::shared_ptr<uint8_t[]>(new uint8_t[dev_desc.bLength], [] (uint8_t* arr) {
+        delete [] arr;
+    });
 
     if (libusb_claim_interface(handle, 0) != 0) {
         libusb_free_device_list(devs, 1);
@@ -63,9 +65,16 @@ void HIDService::showReport(uint16_t vendorId, uint16_t productId)
     int length = 0;
     if (libusb_interrupt_transfer(handle, 0x81, report.get(), dev_desc.bLength, &length, 1000) != 0) {
         libusb_free_device_list(devs, 1);
-        throw new exceptions::UsbReportException();
+        throw new exceptions::UsbTimeoutException(); // TODO: timeout for timeout (if device has another version)
     }
     if (length == 0) {
+        libusb_free_device_list(devs, 1);
+        throw new exceptions::UsbReportException();
+    }
+
+    try {
+        USBDReport::setReport(report, length);
+    } catch (...) {
         libusb_free_device_list(devs, 1);
         throw new exceptions::UsbReportException();
     }
@@ -82,7 +91,7 @@ bool HIDService::checkDevice(uint16_t vendorId, uint16_t productId)
 {
     libusb_device **devs;
 
-    if (libusb_get_device_list(NULL, &devs) <=   0) {
+    if (libusb_get_device_list(NULL, &devs) <= 0) {
         return false;
     }
 
