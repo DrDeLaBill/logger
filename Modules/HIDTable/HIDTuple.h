@@ -6,8 +6,14 @@
 
 #include <memory>
 
-#include "Modules/Exceptions/app_exception.h"
-#include "Modules/Utils/utils/Utils/variables.h"
+#ifdef USE_HAL_DRIVER
+#   include "bmacro.h"
+#   include "variables.h"
+#else
+#   include "Modules/Exceptions/app_exception.h"
+#   include "Modules/Utils/utils/Utils/variables.h"
+#endif
+
 
 
 struct HIDTupleBase {};
@@ -21,7 +27,12 @@ struct HIDTuple : HIDTupleBase
     {
         type_t* value = getter_f{}();
         if (!value) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "Value must not be null");
+        	return nullptr;
+#else
             throw new exceptions::TemplateErrorException();
+#endif
         }
         return value + index;
     }
@@ -29,7 +40,12 @@ struct HIDTuple : HIDTupleBase
     type_t deserialize(const uint8_t* src)
     {
         if (!src) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "Source must not be null");
+        	return 0;
+#else
             throw new exceptions::TemplateErrorException();
+#endif
         }
         return utl::deserialize<type_t>(src)[0];
     }
@@ -37,9 +53,19 @@ struct HIDTuple : HIDTupleBase
     std::shared_ptr<uint8_t[]> serialize(unsigned index = 0)
     {
         if (!target()) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "Target must not be null");
+        	return nullptr;
+#else
             throw new exceptions::TemplateErrorException();
+#endif
         }
         return utl::serialize<type_t>(target(index));
+    }
+
+    constexpr unsigned size()
+    {
+    	return sizeof(type_t);
     }
 };
 

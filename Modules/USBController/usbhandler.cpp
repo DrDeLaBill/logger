@@ -36,7 +36,7 @@ void USBCGetharacteristicHandler::operate() const
 {
     HIDService::init();
 
-    HIDService::loadReport(HID_VENDOR_ID, HID_PRODUCT_ID);
+
 
     HIDService::deinit();
 }

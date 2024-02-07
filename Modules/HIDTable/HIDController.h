@@ -1,22 +1,15 @@
+/* Copyright © 2024 Georgy E. All rights reserved. */
+
 #ifndef HIDCONTROLLER_H
 #define HIDCONTROLLER_H
 
 
+#include <cstring>
 #include <unordered_map>
 
+#include "hid_defs.h"
 #include "HIDTable.h"
 #include "HIDTuple.h"
-
-
-#define HID_VENDOR_ID        (0x0483)
-#define HID_PRODUCT_ID       (0xBEDA)
-
-#define HID_INPUT_REPORT_ID  ((uint8_t)0xB1)
-#define HID_OUTPUT_REPORT_ID ((uint8_t)0xB2)
-#define HID_REPORT_SIZE      ((uint8_t)0x0A)
-
-
-static const char REPORT_PREFIX[] = "LOG";
 
 
 template<class Table>
@@ -72,11 +65,35 @@ public:
     {
         auto it = characteristics.find(key);
         if (it == characteristics.end()) {
+#ifdef USE_HAL_DRIVER
+        	BEDUG_ASSERT(false, "HID table not found error");
+        	return;
+#else
             throw new exceptions::TemplateErrorException();
+#endif
         }
 
         auto lambda = [&] (auto& tuple) {
             tuple.target()[index] = tuple.deserialize(value);
+        };
+
+        std::visit(lambda, it->second);
+    }
+
+    void getValue(const uint16_t key, uint8_t* dst, const uint8_t index = 0)
+    {
+    	auto it = characteristics.find(key);
+        if (it == characteristics.end()) {
+#ifdef USE_HAL_DRIVER
+        	BEDUG_ASSERT(false, "HID table not found error");
+        	return;
+#else
+            throw new exceptions::TemplateErrorException();
+#endif
+        }
+
+        auto lambda = [&] (auto& tuple) {
+        	memcpy(dst, tuple.serialize(index).get(), tuple.size());
         };
 
         std::visit(lambda, it->second);

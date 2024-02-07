@@ -9,9 +9,17 @@
 
 #include "HIDHash.h"
 #include "HIDTuple.h"
-#include "Modules/DeviceSettings/devicesettings.h"
-#include "Modules/Utils/utils/TypeList/TypeListService.h"
-#include "Modules/Utils/utils/TypeList/TypeListBuilder.h"
+
+#ifdef USE_HAL_DRIVER
+#   include "settings.h"
+#   include "TypeListService.h"
+#   include "TypeListBuilder.h"
+#else
+#   include "Modules/DeviceSettings/devicesettings.h"
+#   include "Modules/Utils/utils/TypeList/TypeListService.h"
+#   include "Modules/Utils/utils/TypeList/TypeListBuilder.h"
+#endif
+
 
 struct HIDTableBase {};
 
