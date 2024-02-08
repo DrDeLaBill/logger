@@ -15,9 +15,9 @@
 #   include "TypeListService.h"
 #   include "TypeListBuilder.h"
 #else
-#   include "Modules/DeviceSettings/devicesettings.h"
-#   include "Modules/Utils/utils/TypeList/TypeListService.h"
-#   include "Modules/Utils/utils/TypeList/TypeListBuilder.h"
+#   include "devicesettings.h"
+#   include "TypeListService.h"
+#   include "TypeListBuilder.h"
 #endif
 
 

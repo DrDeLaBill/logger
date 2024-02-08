@@ -7,7 +7,7 @@
 #include <libusb.h>
 
 #include "mainwindow.h"
-#include "Modules/Exceptions/app_exception.h"
+#include "app_exception.h"
 
 
 USBController::USBController(): curParameter("")
@@ -50,8 +50,10 @@ void USBController::handleResults(const QString& parameter)
         MainWindow::setError(parameter);
     }
 
-    if (parameter == USB_SEARCH_HANDLER || parameter == USB_REPORT_HANDLER) { // TODO: remove USB_REPORT_HANDLER
-        proccess(USB_REPORT_HANDLER);
+    if (parameter == USB_SEARCH_HANDLER || parameter == USB_GET_CHARACTERISTIC_HANDLER) { // TODO: remove USB_REPORT_HANDLER
+        proccess(USB_GET_CHARACTERISTIC_HANDLER);
+    } else if (parameter == USB_LOAD_RECORD_HANDLER) {
+        proccess(USB_LOAD_RECORD_HANDLER);
     } else if (parameter == exceptions::USBExceptionGroup().message) {
         proccess(USB_SEARCH_HANDLER);
     }
@@ -59,16 +61,20 @@ void USBController::handleResults(const QString& parameter)
 
 void USBController::responseCharacteristic(const uint16_t key, const uint8_t* result, const uint8_t index)
 {
+#if !defined(QT_NO_DEBUG)
     std::cout << "readCharacteristic response: " << key << "[" << index << "] = " << result[0] << std::endl;
+#endif
 
-    hid_controller.setValue(key, result, index);
+//    hid_settings_controller.setValue(key, result, index); // TODO
 
     // TODO: emit next charctrstc
 }
 
 void USBWorker::doWork(const QString& parameter)
 {
+#if !defined(QT_NO_DEBUG)
     std::cout << "doWork request : " << parameter.toStdString() << std::endl;
+#endif
 
     try {
         auto handler = handlers.find(parameter);

@@ -2,44 +2,36 @@
 
 #include <cstring>
 
-#include "Modules/Exceptions/app_exception.h"
-#include "Modules/HIDTable/HIDController.h"
+#include "app_exception.h"
+//#include "HIDController.h" // TODO
 
 
-uint16_t USBDReport::characteristic = 0;
-USBDReport::report_t USBDReport::payload{0, nullptr};
+//uint16_t USBDReport::characteristic_id = 0; // TODO
+report_pack_t USBDReport::report = {};
 
 
-void USBDReport::setReport(std::shared_ptr<uint8_t[]> report, unsigned int length)
+void USBDReport::setReport(const report_pack_t& report)
 {
-    if (report[0] != HID_OUTPUT_REPORT_ID) {
+    if (report.report_id != HID_OUTPUT_REPORT_ID) {
         throw new exceptions::UsbReportException();
     }
-    int roffset = length - strlen(REPORT_PREFIX);
-    if (roffset - 1 <= 0) {
+    if (memcmp(&report.tag, REPORT_PREFIX, sizeof(REPORT_PREFIX))) {
         throw new exceptions::UsbReportException();
     }
-    if (memcmp(&report[roffset], REPORT_PREFIX, strlen(REPORT_PREFIX))) {
-        throw new exceptions::UsbReportException();
-    }
-    USBDReport::payload.length = roffset;
-    USBDReport::payload.instance = std::shared_ptr<uint8_t[]>(new uint8_t[roffset], [] (uint8_t* arr) {
-        delete [] arr;
-    });
-    memcpy(USBDReport::payload.instance.get(), &report[1], roffset);
+    memcpy(USBDReport::report.data, report.data, sizeof(report.data));
 }
 
-USBDReport::report_t& USBDReport::getReport()
+report_pack_t& USBDReport::getReport()
 {
-    return USBDReport::payload;
+    return USBDReport::report;
 }
 
-void USBDReport::setCharaсteristic(uint16_t characteristic)
-{
-    USBDReport::characteristic = characteristic;
-}
+//void USBDReport::setCharaсteristic(uint16_t characteristic_id) // TODO
+//{
+//    USBDReport::characteristic_id = characteristic_id;
+//}
 
-uint16_t USBDReport::getCharaсteristic()
-{
-    return characteristic;
-}
+//uint16_t USBDReport::getCharaсteristic()
+//{
+//    return characteristic_id;
+//}

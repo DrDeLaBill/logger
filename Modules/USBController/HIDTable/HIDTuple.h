@@ -10,8 +10,8 @@
 #   include "bmacro.h"
 #   include "variables.h"
 #else
-#   include "Modules/Exceptions/app_exception.h"
-#   include "Modules/Utils/utils/Utils/variables.h"
+#   include "app_exception.h"
+#   include "variables.h"
 #endif
 
 

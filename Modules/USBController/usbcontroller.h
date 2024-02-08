@@ -13,13 +13,10 @@
 
 #include <libusb.h>
 #include "usbhandler.h"
-#include "Modules/HIDTable/HIDController.h"
-#include "Modules/DeviceRecord/devicerecord.h"
-#include "Modules/DeviceSettings/devicesettings.h"
 
 
 #define USB_SEARCH_HANDLER             (QString("SEARCH_HANDLER"))
-#define USB_REPORT_HANDLER             (QString("REPORT_HANDLER"))
+#define USB_LOAD_RECORD_HANDLER        (QString("REPORT_HANDLER"))
 #define USB_GET_CHARACTERISTIC_HANDLER (QString("GET_CHARACTERISITIC_HANDLER"))
 
 
@@ -38,8 +35,8 @@ signals:
 private:
     using handler_v = std::variant<
         USBSearchHandler,
-        USBReportHandler,
-        USBCGetharacteristicHandler
+        USBLoadRecordHandler,
+        USBCGetCharacteristicHandler
     >;
     using handler_t = std::unordered_map<
         QString,
@@ -50,8 +47,8 @@ private:
 
     handler_t handlers = {
         {USB_SEARCH_HANDLER, USBSearchHandler{}},
-        {USB_REPORT_HANDLER, USBReportHandler{}},
-        {USB_GET_CHARACTERISTIC_HANDLER, USBCGetharacteristicHandler{}}
+        {USB_LOAD_RECORD_HANDLER, USBLoadRecordHandler{}}, // TODO: load record handler
+        {USB_GET_CHARACTERISTIC_HANDLER, USBCGetCharacteristicHandler{}}
     };
 
 };
@@ -66,25 +63,6 @@ private:
     static constexpr char TAG[] = "USB";
 
     QString curParameter;
-
-    using hid_table_t = HIDTable<
-        HIDTuple<uint16_t, DeviceSettings::dv_type>,
-        HIDTuple<uint8_t,  DeviceSettings::sw_id>,
-        HIDTuple<uint8_t,  DeviceSettings::fw_id>,
-        HIDTuple<uint32_t, DeviceSettings::cf_id>,
-        HIDTuple<uint32_t, DeviceSettings::record_period>,
-        HIDTuple<uint32_t, DeviceSettings::send_period>,
-        HIDTuple<uint32_t, DeviceSettings::record_id>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_status>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg>,
-        HIDTuple<uint32_t, DeviceRecord::id>,
-        HIDTuple<uint32_t, DeviceRecord::time>,
-        HIDTuple<uint8_t,  DeviceRecord::IDs>,
-        HIDTuple<uint16_t, DeviceRecord::values>
-    >;
-
-    HIDController<hid_table_t> hid_controller;
 
 public:
     USBController();

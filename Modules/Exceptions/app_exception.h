@@ -1,6 +1,7 @@
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
+// TODO: move file to Utils
 
 #include <string>
 #include <memory>
@@ -89,6 +90,11 @@ namespace exceptions
     struct UsbUndefinedBehaviourException: public ExceptionBase
     {
         UsbUndefinedBehaviourException(): ExceptionBase("USB_UNDEF_BEHAVIOUR_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct UsbAccessException: public ExceptionBase
+    {
+        UsbAccessException(): ExceptionBase("USB_ACCESS_ERROR", USBExceptionGroup()) {}
     };
 
     struct UsbReportException: public ExceptionBase

@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-#include "Modules/DeviceSettings/devicesettings.h"
+#include "devicesettings.h"
 
 
 struct DeviceRecord
