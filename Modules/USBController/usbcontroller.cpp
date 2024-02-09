@@ -6,6 +6,7 @@
 
 #include <libusb.h>
 
+#include "log.h"
 #include "mainwindow.h"
 #include "app_exception.h"
 
@@ -17,11 +18,9 @@ USBController::USBController(): curParameter("")
 
     QObject::connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
     // USB HID device check
+    // Read characteristics
     QObject::connect(this, &USBController::operate, worker, &USBWorker::doWork);
     QObject::connect(worker, &USBWorker::resultReady, this, &USBController::handleResults);
-    // Read characteristics
-    QObject::connect(this, &USBController::requestCharacteristic, worker, &USBWorker::readCharacteristic);
-    QObject::connect(worker, &USBWorker::characteristicReady, this, &USBController::responseCharacteristic);
     // Write characteristics
     // TODO ---...---
 
@@ -42,12 +41,16 @@ void USBController::proccess(const QString& parameter)
 
 void USBController::handleResults(const QString& parameter)
 {
-    std::cout << "doWork response: " << parameter.toStdString() << std::endl;
+#if !defined(QT_NO_DEBUG)
+    printTagLog(TAG, "response: %s", parameter.toStdString().c_str());
+#endif
 
     if (parameter == curParameter) {
         MainWindow::setBytesLabel(parameter);
     } else {
         MainWindow::setError(parameter);
+        proccess(USB_SEARCH_HANDLER); // TODO: do normal if
+        return;
     }
 
     if (parameter == USB_SEARCH_HANDLER || parameter == USB_GET_CHARACTERISTIC_HANDLER) { // TODO: remove USB_REPORT_HANDLER
@@ -59,21 +62,10 @@ void USBController::handleResults(const QString& parameter)
     }
 }
 
-void USBController::responseCharacteristic(const uint16_t key, const uint8_t* result, const uint8_t index)
-{
-#if !defined(QT_NO_DEBUG)
-    std::cout << "readCharacteristic response: " << key << "[" << index << "] = " << result[0] << std::endl;
-#endif
-
-//    hid_settings_controller.setValue(key, result, index); // TODO
-
-    // TODO: emit next charctrstc
-}
-
 void USBWorker::doWork(const QString& parameter)
 {
 #if !defined(QT_NO_DEBUG)
-    std::cout << "doWork request : " << parameter.toStdString() << std::endl;
+    printTagLog(TAG, "request : %s", parameter.toStdString().c_str());
 #endif
 
     try {
@@ -98,11 +90,4 @@ void USBWorker::doWork(const QString& parameter)
     } catch (...) {
         emit resultReady(exceptions::InternalErrorException().groupMessage());
     }
-}
-
-void USBWorker::readCharacteristic(const uint16_t key, const uint8_t index)
-{
-    std::cout << "readCharacteristic request : " << key << "[" << index << "]" << std::endl;
-
-    // TODO: read charctrsts from USB
 }

@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-#include "HIDStruct.h"
+#include "hid_defs.h"
 
 
 struct USBDReport

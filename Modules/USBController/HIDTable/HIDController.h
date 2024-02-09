@@ -4,6 +4,7 @@
 #define HIDCONTROLLER_H
 
 
+#include <variant>
 #include <cstring>
 #include <unordered_map>
 
@@ -107,6 +108,28 @@ public:
     constexpr unsigned maxKey()
     {
         return max_key;
+    }
+
+    constexpr unsigned characteristicLength(uint16_t characteristic_id)
+    {
+        auto it = characteristics.find(characteristic_id);
+        if (it == characteristics.end()) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "HID table not found error");
+            return 0;
+#else
+            throw new exceptions::TemplateErrorException();
+#endif
+        }
+
+        unsigned result = 0;
+        auto lambda = [&] (const auto& tuple) {
+            result = tuple.length();
+        };
+
+        std::visit(lambda, it->second);
+
+        return result;
     }
 
 };

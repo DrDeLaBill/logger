@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "Timer.h"
+#include "utils.h"
 #include "HIDController.h"
 #include "FiniteStateMachine.h"
 #include "devicerecord.h"
@@ -85,9 +86,12 @@ private:
     void proccess();
 
 protected:
+    static constexpr unsigned ERRORS_COUNT_MAX = 5;
+
     static fsm::FiniteStateMachine<fsm_table> fsm;
     static uint16_t characteristic_id;
     static unsigned errors_count;
+    static uint8_t index;
 
     using hid_settings_table_t = HIDTable<
         HIDTuple<uint16_t, DeviceSettings::dv_type>,
@@ -97,9 +101,9 @@ protected:
         HIDTuple<uint32_t, DeviceSettings::record_period>,
         HIDTuple<uint32_t, DeviceSettings::send_period>,
         HIDTuple<uint32_t, DeviceSettings::record_id>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_status>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg>
+        HIDTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
+        HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
+        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
     >;
 
     static HIDController<hid_settings_table_t> hid_settings_controller;
@@ -107,6 +111,11 @@ protected:
 public:
     void operate() const;
 
+};
+
+struct USBCSetCharacteristicHandler
+{
+    void operate() const;
 };
 
 

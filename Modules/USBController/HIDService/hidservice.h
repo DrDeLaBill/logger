@@ -29,20 +29,18 @@ public:
     static std::unique_ptr<uint8_t> getReport(uint16_t vendorId, uint16_t productId);
 
 private:
+    static libusb_device_handle* handle;
+    static libusb_device** devs;
+
     static bool checkDevice(uint16_t vendorId, uint16_t productId);
     static libusb_device* findDevice(libusb_device **devs, uint16_t vendorId, uint16_t productId);
 
     static void initSession(
-        libusb_device_handle *handle,
-        libusb_device **devs,
         libusb_device_descriptor* dev_desc,
-        uint16_t vendorId,
-        uint16_t productId
+        uint16_t                  vendorId,
+        uint16_t                  productId
     );
-    static void closeSession(
-        libusb_device_handle *handle,
-        libusb_device **devs
-    );
+    static void closeSession();
 
     // TODO: https://stackoverflow.com/questions/3561659/how-can-i-abstract-out-a-repeating-try-catch-pattern-in-c
     static void handleException();

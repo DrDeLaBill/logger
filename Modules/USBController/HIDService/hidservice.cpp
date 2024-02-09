@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <memory>
+#include <iostream>
 
 #include <libusb.h>
 
@@ -11,6 +12,9 @@
 #include "usbhreport.h"
 #include "app_exception.h"
 
+
+libusb_device_handle* HIDService::handle = NULL;
+libusb_device** HIDService:: devs = NULL;
 
 void HIDService::init()
 {
@@ -31,14 +35,12 @@ bool HIDService::isDeviceConnected(uint16_t vendorId, uint16_t productId)
 
 void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_pack_t& request)
 {
-    libusb_device_handle *handle = NULL;
-    libusb_device **devs = NULL;
     struct libusb_device_descriptor dev_desc;
 
     try {
-        initSession(handle, devs, &dev_desc, vendorId, productId);
+        initSession(&dev_desc, vendorId, productId);
     } catch (...) {
-        closeSession(handle, devs);
+        closeSession();
         throw;
     }
 
@@ -87,30 +89,28 @@ void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_
         }
 
     } catch (...) {
-        closeSession(handle, devs);
+        closeSession();
         throw;
     }
 
-    closeSession(handle, devs);
+    closeSession();
 
 #if !defined(QT_NO_DEBUG)
-    printTagLog(TAG, "HOST REPORT:\n");
+    printTagLog(TAG, "HOST REPORT:");
     USBHReport::getReport().show();
-    printTagLog(TAG, "DEVICE REPORT:\n");
+    printTagLog(TAG, "DEVICE REPORT:");
     USBDReport::getReport().show();
 #endif
 }
 
 void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
 {
-    libusb_device_handle *handle = NULL;
-    libusb_device **devs = NULL;
     struct libusb_device_descriptor dev_desc;
 
     try {
-        initSession(handle, devs, &dev_desc, vendorId, productId);
+        initSession(&dev_desc, vendorId, productId);
     } catch (...) {
-        closeSession(handle, devs);
+        closeSession();
         throw;
     }
 
@@ -140,21 +140,19 @@ void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
             throw exceptions::UsbReportException();
         }
     } catch (...) {
-        closeSession(handle, devs);
+        closeSession();
         throw;
     }
 
-    closeSession(handle, devs);
+    closeSession();
 
 #if !defined(QT_NO_DEBUG)
-    printTagLog(TAG, "DEVICE REPORT:\n");
+    printTagLog(TAG, "DEVICE REPORT:");
     USBDReport::getReport().show();
 #endif
 }
 
 void HIDService::initSession(
-    libusb_device_handle*     handle,
-    libusb_device**           devs,
     libusb_device_descriptor* dev_desc,
     uint16_t                  vendorId,
     uint16_t                  productId
@@ -175,11 +173,11 @@ void HIDService::initSession(
 
     int res = 0;
     if (libusb_kernel_driver_active(handle, HID_INTERFACE)) {
-        res = libusb_detach_kernel_driver(handle,HID_INTERFACE);
+        res = libusb_detach_kernel_driver(handle, HID_INTERFACE);
     }
-    if (res < 0) {
-        throw exceptions::UsbAccessException();
-    }
+//    if (res < 0) {
+//        throw exceptions::UsbAccessException();
+//    }
 
     // TODO: get descriptor from findDevice func
     if (libusb_get_device_descriptor(dev, dev_desc) != 0) {
@@ -191,13 +189,14 @@ void HIDService::initSession(
     }
 }
 
-void HIDService::closeSession(
-    libusb_device_handle *handle,
-    libusb_device **devs
-) {
-    libusb_attach_kernel_driver(handle, HID_INTERFACE);
+void HIDService::closeSession() {
+    if (handle) {
+        libusb_attach_kernel_driver(handle, HID_INTERFACE);
+    }
 
-    libusb_free_device_list(devs, 1);
+    if (devs) {
+        libusb_free_device_list(devs, 1);
+    }
 }
 
 bool HIDService::checkDevice(uint16_t vendorId, uint16_t productId)

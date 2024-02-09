@@ -26,13 +26,13 @@ class USBWorker : public QObject
 
 public slots:
     void doWork(const QString& parameter);
-    void readCharacteristic(const uint16_t key, const uint8_t index = 0);
 
 signals:
     void resultReady(const QString& result);
-    void characteristicReady(const uint16_t key, const uint8_t* result, const uint8_t index = 0);
 
 private:
+    static constexpr char TAG[] = "USBW";
+
     using handler_v = std::variant<
         USBSearchHandler,
         USBLoadRecordHandler,
@@ -60,7 +60,7 @@ class USBController : public QObject
     QThread workerThread;
 
 private:
-    static constexpr char TAG[] = "USB";
+    static constexpr char TAG[] = "USBC";
 
     QString curParameter;
 
@@ -72,11 +72,9 @@ public:
 
 public slots:
     void handleResults(const QString& parameter);
-    void responseCharacteristic(const uint16_t key, const uint8_t* result, const uint8_t index = 0);
 
 signals:
     void operate(const QString& parameter);
-    void requestCharacteristic(const uint16_t key, const uint8_t index = 0);
 
 };
 
