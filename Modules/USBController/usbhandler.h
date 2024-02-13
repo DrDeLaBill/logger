@@ -8,8 +8,10 @@
 
 #include "Timer.h"
 #include "utils.h"
-#include "HIDController.h"
 #include "FiniteStateMachine.h"
+
+#include "usbcstatus.h"
+#include "HIDController.h"
 #include "devicerecord.h"
 #include "devicesettings.h"
 
@@ -24,9 +26,14 @@ struct USBHandlerHash
     std::size_t operator()(const QString& key) const;
 };
 
+struct USBIdleHandler
+{
+    USBCStatus operate() const;
+};
+
 struct USBSearchHandler
 {
-    void operate() const;
+    USBCStatus operate() const;
 };
 
 struct USBLoadRecordHandler // TODO: load
@@ -43,15 +50,17 @@ protected:
     HIDController<hid_log_table_t> hid_log_controller;
 
 public:
-    void operate() const;
+    USBCStatus operate() const;
+
 };
 
-struct USBCGetCharacteristicHandler
+struct USBUpdateHandler
 {
 protected:
     // Events:
     FSM_CREATE_EVENT(ready_e, 0);
     FSM_CREATE_EVENT(success_e, 0);
+    FSM_CREATE_EVENT(update_e, 0);
     FSM_CREATE_EVENT(end_e, 1);
     FSM_CREATE_EVENT(timeout_e, 2);
     FSM_CREATE_EVENT(error_e, 3);
@@ -60,7 +69,7 @@ protected:
 private:
     // States:
     struct _init_s    {void operator()(void);};
-    struct _idle_s    {void operator()(void); static utl::Timer timer;};
+    struct _idle_s    {void operator()(void);};
     struct _request_s {void operator()(void); static utl::Timer timer;};
 
     FSM_CREATE_STATE(init_s, _init_s);
@@ -70,16 +79,18 @@ private:
     // Actions:
     struct init_characteristics_a    {void operator()(void);};
     struct iterate_characteristics_a {void operator()(void);};
-    struct start_idle_timer_a        {void operator()(void);};
+    struct start_init_a              {void operator()(void);};
+    struct start_idle_a              {void operator()(void);};
     struct count_error_a             {void operator()(void);};
     struct reset_usb_a               {void operator()(void);};
 
     using fsm_table = fsm::TransitionTable<
         fsm::Transition<init_s,    success_e, request_s, init_characteristics_a,    fsm::Guard::NO_GUARD>,
-        fsm::Transition<idle_s,    timeout_e, request_s, init_characteristics_a,    fsm::Guard::NO_GUARD>,
+        fsm::Transition<idle_s,    update_e,  request_s, init_characteristics_a,    fsm::Guard::NO_GUARD>,
         fsm::Transition<request_s, success_e, request_s, iterate_characteristics_a, fsm::Guard::NO_GUARD>,
         fsm::Transition<request_s, timeout_e, request_s, count_error_a,             fsm::Guard::NO_GUARD>,
-        fsm::Transition<request_s, end_e,     idle_s,    start_idle_timer_a,        fsm::Guard::NO_GUARD>,
+        fsm::Transition<request_s, end_e,     idle_s,    start_idle_a,              fsm::Guard::NO_GUARD>,
+        fsm::Transition<idle_s,    success_e, init_s,    start_init_a,              fsm::Guard::NO_GUARD>,
         fsm::Transition<request_s, error_e,   init_s,    reset_usb_a,               fsm::Guard::NO_GUARD>
     >;
 
@@ -91,6 +102,7 @@ protected:
     static fsm::FiniteStateMachine<fsm_table> fsm;
     static uint16_t characteristic_id;
     static unsigned errors_count;
+    static USBCStatus result;
     static uint8_t index;
 
     using hid_settings_table_t = HIDTable<
@@ -109,13 +121,15 @@ protected:
     static HIDController<hid_settings_table_t> hid_settings_controller;
 
 public:
-    void operate() const;
+    USBCStatus operate() const;
+
+    static void update();
 
 };
 
-struct USBCSetCharacteristicHandler
+struct USBUpgradeHandler
 {
-    void operate() const;
+    USBCStatus operate() const;
 };
 
 

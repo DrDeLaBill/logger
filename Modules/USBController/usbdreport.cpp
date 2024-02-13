@@ -16,7 +16,7 @@ void USBDReport::setReport(const report_pack_t& report)
     if (memcmp(&report.tag, REPORT_PREFIX, sizeof(REPORT_PREFIX))) {
         throw new exceptions::UsbReportException();
     }
-    memcpy(reinterpret_cast<void*>(&USBDReport::report), reinterpret_cast<void*>(const_cast<report_pack_t*>(&report)), sizeof(report));
+    memcpy(reinterpret_cast<void*>(&(USBDReport::report)), reinterpret_cast<void*>(const_cast<report_pack_t*>(&report)), sizeof(report));
 }
 
 report_pack_t& USBDReport::getReport()

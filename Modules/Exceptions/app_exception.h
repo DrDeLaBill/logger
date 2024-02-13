@@ -23,9 +23,15 @@ namespace exceptions
     {
         InternallExceptionGroup(): ExceptionGroupBase("INTERNAL_ERROR") {}
     };
+
     struct USBExceptionGroup: public ExceptionGroupBase
     {
         USBExceptionGroup(): ExceptionGroupBase("USB_ERROR") {}
+    };
+
+    struct DeviceGroup: public ExceptionGroupBase
+    {
+        DeviceGroup(): ExceptionGroupBase("DEVICE_ERROR") {}
     };
     /* Exception groups end */
 
@@ -100,6 +106,16 @@ namespace exceptions
     struct UsbReportException: public ExceptionBase
     {
         UsbReportException(): ExceptionBase("USB_REPORT_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct DeviceException: public ExceptionBase
+    {
+        DeviceException(): ExceptionBase("DEVICE_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct DeviceVersionException: public ExceptionBase
+    {
+        DeviceVersionException(): ExceptionBase("DEVICE_VERSION_ERROR", USBExceptionGroup()) {}
     };
     /* Exceptions end */
 }

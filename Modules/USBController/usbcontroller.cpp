@@ -11,7 +11,7 @@
 #include "app_exception.h"
 
 
-USBController::USBController(): curParameter("")
+USBController::USBController()
 {
     USBWorker *worker = new USBWorker;
     worker->moveToThread(&workerThread);
@@ -33,33 +33,18 @@ USBController::~USBController()
     workerThread.wait();
 }
 
-void USBController::proccess(const QString& parameter)
+void USBController::proccess(const QString& handler)
 {
-    curParameter = parameter;
-    emit operate(parameter);
+    emit operate(handler);
 }
 
-void USBController::handleResults(const QString& parameter)
+void USBController::handleResults(const USBCStatus& status)
 {
 #if !defined(QT_NO_DEBUG)
-    printTagLog(TAG, "response: %s", parameter.toStdString().c_str());
+    printTagLog(TAG, "response: %u", status);
 #endif
 
-    if (parameter == curParameter) {
-        MainWindow::setBytesLabel(parameter);
-    } else {
-        MainWindow::setError(parameter);
-        proccess(USB_SEARCH_HANDLER); // TODO: do normal if
-        return;
-    }
-
-    if (parameter == USB_SEARCH_HANDLER || parameter == USB_GET_CHARACTERISTIC_HANDLER) { // TODO: remove USB_REPORT_HANDLER
-        proccess(USB_GET_CHARACTERISTIC_HANDLER);
-    } else if (parameter == USB_LOAD_RECORD_HANDLER) {
-        proccess(USB_LOAD_RECORD_HANDLER);
-    } else if (parameter == exceptions::USBExceptionGroup().message) {
-        proccess(USB_SEARCH_HANDLER);
-    }
+    MainWindow::proccess(status);
 }
 
 void USBWorker::doWork(const QString& parameter)
@@ -75,19 +60,29 @@ void USBWorker::doWork(const QString& parameter)
             throw new exceptions::UsbUndefinedBehaviourException(); // TODO: list of user's errors (errors that shows for user)
         }
 
-        auto lambda = [] (const auto& handler) {
-            handler.operate();
+        USBCStatus status = USBC_RES_ERROR;
+
+        auto lambda = [&] (const auto& handler) {
+            status = handler.operate();
         };
 
         std::visit(lambda, handler->second);
 
-        emit resultReady(parameter);
+        emit resultReady(status);
     } catch (const exceptions::ExceptionBase& exc) {
-        // TODO: log error -> exc.what()
-        emit resultReady(exc.groupMessage());
+        if (exc.groupMessage() == exceptions::USBExceptionGroup().message) {
+            emit resultReady(USBC_RES_ERROR);
+        } else {
+            emit resultReady(USBC_INTERNAL_ERROR);
+        }
     } catch (const exceptions::ExceptionBase* exc) {
-        emit resultReady(exc->groupMessage());
+        if (exc->groupMessage() == exceptions::USBExceptionGroup().message) {
+            emit resultReady(USBC_RES_ERROR);
+        } else {
+            emit resultReady(USBC_INTERNAL_ERROR);
+        }
     } catch (...) {
-        emit resultReady(exceptions::InternalErrorException().groupMessage());
+        emit resultReady(USBC_INTERNAL_ERROR);
+        throw;
     }
 }

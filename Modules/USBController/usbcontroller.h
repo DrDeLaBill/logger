@@ -13,11 +13,14 @@
 
 #include <libusb.h>
 #include "usbhandler.h"
+#include "usbcstatus.h"
 
 
-#define USB_SEARCH_HANDLER             (QString("SEARCH_HANDLER"))
-#define USB_LOAD_RECORD_HANDLER        (QString("REPORT_HANDLER"))
-#define USB_GET_CHARACTERISTIC_HANDLER (QString("GET_CHARACTERISITIC_HANDLER"))
+#define USB_IDLE_HANDLER         (QString("IDLE_HANDLER"))
+#define USB_SEARCH_HANDLER       (QString("SEARCH_HANDLER"))
+#define USB_LOAD_RECORD_HANDLER  (QString("LOAD_RECORD_HANDLER"))
+#define USB_UPGRADE_HANDLER      (QString("UPGRADE_HANDLER"))
+#define USB_UPDATE_HANDLER       (QString("UPDATE_HANDLER"))
 
 
 class USBWorker : public QObject
@@ -25,18 +28,20 @@ class USBWorker : public QObject
     Q_OBJECT
 
 public slots:
-    void doWork(const QString& parameter);
+    void doWork(const QString& status);
 
 signals:
-    void resultReady(const QString& result);
+    void resultReady(const USBCStatus& status);
 
 private:
     static constexpr char TAG[] = "USBW";
 
     using handler_v = std::variant<
+        USBIdleHandler,
         USBSearchHandler,
         USBLoadRecordHandler,
-        USBCGetCharacteristicHandler
+        USBUpgradeHandler,
+        USBUpdateHandler
     >;
     using handler_t = std::unordered_map<
         QString,
@@ -46,9 +51,11 @@ private:
     >;
 
     handler_t handlers = {
-        {USB_SEARCH_HANDLER, USBSearchHandler{}},
-        {USB_LOAD_RECORD_HANDLER, USBLoadRecordHandler{}}, // TODO: load record handler
-        {USB_GET_CHARACTERISTIC_HANDLER, USBCGetCharacteristicHandler{}}
+        {USB_IDLE_HANDLER,        USBIdleHandler{}},
+        {USB_SEARCH_HANDLER,      USBSearchHandler{}}, // TODO: like set_table -> set_tuple in FSM
+        {USB_LOAD_RECORD_HANDLER, USBLoadRecordHandler{}},
+        {USB_UPGRADE_HANDLER,     USBUpgradeHandler{}},
+        {USB_UPDATE_HANDLER,      USBUpdateHandler{}}
     };
 
 };
@@ -62,19 +69,23 @@ class USBController : public QObject
 private:
     static constexpr char TAG[] = "USBC";
 
-    QString curParameter;
-
 public:
     USBController();
     ~USBController();
 
-    void proccess(const QString& parameter = USB_SEARCH_HANDLER);
+    void proccess(const QString& status = USB_IDLE_HANDLER);
+
+    // TODO: is this needed?
+    // Load data from the device
+    void update();
+    // Load data to the device
+    void upgrade();
 
 public slots:
-    void handleResults(const QString& parameter);
+    void handleResults(const USBCStatus& status);
 
 signals:
-    void operate(const QString& parameter);
+    void operate(const QString& status);
 
 };
 

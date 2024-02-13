@@ -20,57 +20,83 @@ std::size_t USBHandlerHash::operator()(const QString& key) const
     return std::hash<std::string>{}(key.toStdString());
 }
 
-void USBSearchHandler::operate() const
+USBCStatus USBIdleHandler::operate() const
+{
+    return USBC_RES_DONE;
+}
+
+USBCStatus USBSearchHandler::operate() const
 {
     HIDService::init();
 
-    while (!HIDService::isDeviceConnected(HID_VENDOR_ID, HID_PRODUCT_ID));
+    bool status = HIDService::isDeviceConnected(HID_VENDOR_ID, HID_PRODUCT_ID);
 
     HIDService::deinit();
+
+    return status ? USBC_RES_DONE : USBC_RES_ERROR;
 }
 
-void USBLoadRecordHandler::operate() const
+USBCStatus USBLoadRecordHandler::operate() const
 {
-    HIDService::init();
+//    HIDService::init();
 
-    HIDService::loadReport(HID_VENDOR_ID, HID_PRODUCT_ID);
+//    HIDService::loadReport(HID_VENDOR_ID, HID_PRODUCT_ID);
 
-    HIDService::deinit();
+//    HIDService::deinit();
+    return USBC_RES_ERROR;
 }
 
 
-HIDController<USBCGetCharacteristicHandler::hid_settings_table_t> USBCGetCharacteristicHandler::hid_settings_controller;
-fsm::FiniteStateMachine<USBCGetCharacteristicHandler::fsm_table> USBCGetCharacteristicHandler::fsm;
-uint16_t USBCGetCharacteristicHandler::characteristic_id = HID_FIRST_KEY;
-unsigned USBCGetCharacteristicHandler::errors_count = 0;
-uint8_t USBCGetCharacteristicHandler::index = 0;
-void USBCGetCharacteristicHandler::operate() const
+HIDController<USBUpdateHandler::hid_settings_table_t> USBUpdateHandler::hid_settings_controller;
+fsm::FiniteStateMachine<USBUpdateHandler::fsm_table> USBUpdateHandler::fsm;
+uint16_t USBUpdateHandler::characteristic_id = HID_FIRST_KEY;
+unsigned USBUpdateHandler::errors_count = 0;
+USBCStatus USBUpdateHandler::result = USBC_RES_OK;
+uint8_t USBUpdateHandler::index = 0;
+USBCStatus USBUpdateHandler::operate() const
 {
     HIDService::init();
 
     fsm.proccess();
 
     HIDService::deinit();
+
+    return result;
 }
 
-void USBCGetCharacteristicHandler::_init_s::operator ()()
+void USBUpdateHandler::update()
 {
-    fsm.push_event(success_e{});
-}
-
-utl::Timer USBCGetCharacteristicHandler::_idle_s::timer(DEVICE_DELAY_MS);
-void USBCGetCharacteristicHandler::_idle_s::operator ()()
-{
-    if (!timer.wait()) {
-        fsm.push_event(timeout_e{});
+    if (result == USBC_RES_DONE) {
+        fsm.push_event(success_e{});
     }
 }
 
-utl::Timer USBCGetCharacteristicHandler::_request_s::timer(DEVICE_DELAY_MS);
-void USBCGetCharacteristicHandler::_request_s::operator ()()
+void USBUpdateHandler::_init_s::operator ()()
 {
+    fsm.push_event(success_e{});
+    result = USBC_RES_OK;
+}
+
+void USBUpdateHandler::_idle_s::operator ()()
+{
+    fsm.push_event(success_e{});
+    result = USBC_RES_DONE;
+}
+
+utl::Timer USBUpdateHandler::_request_s::timer(DEVICE_DELAY_MS);
+void USBUpdateHandler::_request_s::operator ()()
+{
+    result = USBC_RES_OK;
+
     if (!timer.wait()) {
         fsm.push_event(timeout_e{});
+        result = USBC_RES_ERROR;
+        return;
+    }
+
+    if (characteristic_id > hid_settings_controller.maxKey()) {
+        fsm.push_event(end_e{});
+        result = USBC_RES_ERROR;
         return;
     }
 
@@ -83,6 +109,7 @@ void USBCGetCharacteristicHandler::_request_s::operator ()()
     try {
         HIDService::sendReport(HID_VENDOR_ID, HID_PRODUCT_ID, report);
     } catch (...) {
+        result = USBC_RES_ERROR;
         if (errors_count > ERRORS_COUNT_MAX) {
             throw;
         }
@@ -95,7 +122,7 @@ void USBCGetCharacteristicHandler::_request_s::operator ()()
     fsm.push_event(success_e{});
 }
 
-void USBCGetCharacteristicHandler::init_characteristics_a::operator ()()
+void USBUpdateHandler::init_characteristics_a::operator ()()
 {
     characteristic_id = HID_FIRST_KEY;
     index = 0;
@@ -103,36 +130,36 @@ void USBCGetCharacteristicHandler::init_characteristics_a::operator ()()
     _request_s::timer.start();
 }
 
-void USBCGetCharacteristicHandler::iterate_characteristics_a::operator ()()
+void USBUpdateHandler::iterate_characteristics_a::operator ()()
 {
-    if (index < hid_settings_controller.characteristicLength(characteristic_id)) {
-        index++;
-    } else {
+    index++;
+    if (index >= hid_settings_controller.characteristicLength(characteristic_id)) {
         characteristic_id++;
         index = 0;
         errors_count = 0;
     }
 
-    if (characteristic_id > hid_settings_controller.maxKey()) {
-        fsm.push_event(end_e{});
-    }
-
     _request_s::timer.start();
 }
 
-void USBCGetCharacteristicHandler::start_idle_timer_a::operator ()()
-{
-    _idle_s::timer.start();
-}
+void USBUpdateHandler::start_init_a::operator ()() { }
 
-void USBCGetCharacteristicHandler::count_error_a::operator ()()
+void USBUpdateHandler::start_idle_a::operator ()() { }
+
+void USBUpdateHandler::count_error_a::operator ()()
 {
     errors_count++;
     _request_s::timer.start();
 }
 
-void USBCGetCharacteristicHandler::reset_usb_a::operator ()()
+void USBUpdateHandler::reset_usb_a::operator ()()
 {
     // TODO: reset usb
     throw exceptions::UsbException();
+}
+
+USBCStatus USBUpgradeHandler::operate() const
+{
+    // TODO: save
+    return USBC_RES_ERROR;
 }

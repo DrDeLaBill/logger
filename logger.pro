@@ -30,6 +30,7 @@ HEADERS += \
     Modules/Exceptions/app_exception.h \
     Modules/USBController/HIDService/hidservice.h \
     Modules/USBController/HIDTable/HIDController.h \
+    Modules/USBController/usbcstatus.h \
     Modules/USBController/usbcontroller.h \
     Modules/USBController/usbdreport.h \
     Modules/USBController/usbhandler.h \

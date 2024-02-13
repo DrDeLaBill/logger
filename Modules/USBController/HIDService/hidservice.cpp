@@ -7,6 +7,9 @@
 
 #include <libusb.h>
 
+#include "log.h"
+#include "variables.h"
+
 #include "hid_defs.h"
 #include "usbdreport.h"
 #include "usbhreport.h"
@@ -100,6 +103,7 @@ void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_
     USBHReport::getReport().show();
     printTagLog(TAG, "DEVICE REPORT:");
     USBDReport::getReport().show();
+    printPretty("deserializated: %u\n", utl::deserialize<uint32_t>(USBDReport::getReport().data)[0]);
 #endif
 }
 
