@@ -19,10 +19,10 @@
 
 struct HIDTupleBase {};
 
-template<class type_t, class getter_f = void, unsigned LENGTH = 1>
+template<class type_t, class callback_c = void, unsigned LENGTH = 1>
 struct HIDTuple : HIDTupleBase
 {
-    static_assert(!std::is_same<getter_f, void>::value, "Tuple getter functor must be non void");
+    static_assert(!std::is_same<callback_c, void>::value, "Tuple getter functor must be non void");
     static_assert(LENGTH > 0, "Length must not be 0");
 
 
@@ -43,30 +43,6 @@ struct HIDTuple : HIDTupleBase
 #endif
     }
 
-    type_t* target(unsigned index = 0)
-    {
-        if (index >= length()) {
-#ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "The value index is large than the value length");
-            details(index);
-        	return nullptr;
-#else
-            throw new exceptions::TemplateErrorException();
-#endif
-        }
-        type_t* value = getter_f{}();
-        if (!value) {
-#ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "Value must not be null");
-            details(index);
-        	return nullptr;
-#else
-            throw new exceptions::TemplateErrorException();
-#endif
-        }
-        return value + index; // * sizeof(type_t);
-    }
-
     type_t deserialize(const uint8_t* src)
     {
         if (!src) {
@@ -82,8 +58,8 @@ struct HIDTuple : HIDTupleBase
 
     std::shared_ptr<uint8_t[]> serialize(unsigned index = 0)
     {
-    	type_t* value = target(index);
-        if (!value || index >= length()) {
+        type_t value = static_cast<type_t>(callback_c{}.get(index));
+        if (index >= length()) {
 #ifdef USE_HAL_DRIVER
             BEDUG_ASSERT(false, "Target must not be null");
             details(index);
@@ -92,7 +68,12 @@ struct HIDTuple : HIDTupleBase
             throw new exceptions::TemplateErrorException();
 #endif
         }
-        return utl::serialize<type_t>(value);
+        return utl::serialize<type_t>(&value);
+    }
+
+    void set(type_t value, unsigned index = 0)
+    {
+        callback_c{}.set(value, index);
     }
 };
 

@@ -5,10 +5,9 @@
 #include <cstdint>
 
 
-#define DV_TYPE    ((uint16_t)0x0001)
-#define SW_VERSION ((uint8_t)0x04)
-#define FW_VERSION ((uint8_t)0x01)
-#define CF_VERSION ((uint8_t)0x01)
+#define DV_TYPE            ((uint16_t)0x0001)
+#define SW_VERSION         ((uint8_t)0x04)
+#define FW_VERSION         ((uint8_t)0x01)
 
 #define MODBUS_SENS_COUNT  ((uint8_t)127)
 
@@ -18,7 +17,7 @@ struct DeviceSettings
     typedef struct _settings_t {
         // Device type
         uint16_t  dv_type;
-            // Software version
+        // Software version
         uint8_t  sw_id;
         // Firmware version
         uint8_t  fw_id;
@@ -44,16 +43,56 @@ struct DeviceSettings
 
     bool check();
 
-    struct dv_type           { uint16_t* operator()() { return &settings.dv_type; } };
-    struct sw_id             { uint8_t*  operator()() { return &settings.sw_id; } };
-    struct fw_id             { uint8_t*  operator()() { return &settings.fw_id; } };
-    struct cf_id             { uint32_t* operator()() { return &settings.cf_id; } };
-    struct record_period     { uint32_t* operator()() { return &settings.record_period; } };
-    struct send_period       { uint32_t* operator()() { return &settings.send_period; } };
-    struct record_id         { uint32_t* operator()() { return &settings.record_id; } };
-    struct modbus1_status    { uint16_t* operator()() { return settings.modbus1_status; } };
-    struct modbus1_value_reg { uint16_t* operator()() { return settings.modbus1_value_reg; } };
-    struct modbus1_id_reg    { uint16_t* operator()() { return settings.modbus1_id_reg; } };
+    struct dv_type
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct sw_id
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct fw_id
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct cf_id
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct record_period
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct send_period
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct record_id
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct modbus1_status
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct modbus1_value_reg
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
+    struct modbus1_id_reg
+    {
+        void set(uint64_t value, unsigned index = 0);
+        uint64_t get(unsigned index = 0);
+    };
 };
 
 #endif // DEVICESETTINGS_H

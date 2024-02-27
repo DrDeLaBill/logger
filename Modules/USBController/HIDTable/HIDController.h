@@ -79,7 +79,7 @@ public:
         }
 
         auto lambda = [&] (auto& tuple) {
-            tuple.target()[index] = tuple.deserialize(value);
+            tuple.set(tuple.deserialize(value), index);
         };
 
         std::visit(lambda, it->second);
@@ -99,7 +99,7 @@ public:
         }
 
         auto lambda = [&] (auto& tuple) {
-        	memcpy(dst, tuple.serialize(index).get(), tuple.size());
+            memcpy_s(dst, sizeof(uint32_t), tuple.serialize(index).get(), tuple.size());
         };
 
         std::visit(lambda, it->second);

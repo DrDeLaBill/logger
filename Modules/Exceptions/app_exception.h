@@ -73,9 +73,14 @@ namespace exceptions
         UsbException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}
     };
 
+    struct UsbStatusException: public ExceptionBase
+    {
+        UsbStatusException(): ExceptionBase("USB_STATUS_ERROR", USBExceptionGroup()) {}
+    };
+
     struct UsbTimeoutException: public ExceptionBase
     {
-        UsbTimeoutException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}
+        UsbTimeoutException(): ExceptionBase("USB_TIMEOUT_ERROR", USBExceptionGroup()) {}
     };
 
     struct UsbInitException: public ExceptionBase

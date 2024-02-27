@@ -11,8 +11,8 @@
 #include "variables.h"
 
 #include "hid_defs.h"
-#include "usbdreport.h"
 #include "usbhreport.h"
+#include "usbdreport.h"
 #include "app_exception.h"
 
 
@@ -100,9 +100,9 @@ void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_
 
 #if !defined(QT_NO_DEBUG)
     printTagLog(TAG, "HOST REPORT:");
-    USBHReport::getReport().show();
+    hid_report_show(&USBHReport::getReport());
     printTagLog(TAG, "DEVICE REPORT:");
-    USBDReport::getReport().show();
+    hid_report_show(&USBDReport::getReport());
     printPretty("deserializated: %u\n", utl::deserialize<uint32_t>(USBDReport::getReport().data)[0]);
 #endif
 }
@@ -152,7 +152,7 @@ void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
 
 #if !defined(QT_NO_DEBUG)
     printTagLog(TAG, "DEVICE REPORT:");
-    USBDReport::getReport().show();
+    hid_report_show(&USBDReport::getReport());
 #endif
 }
 

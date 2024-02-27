@@ -11,16 +11,13 @@ CONFIG += c++17
 SOURCES += \
     Modules/DeviceRecord/devicerecord.cpp \
     Modules/DeviceSettings/devicesettings.cpp \
-    Modules/USBController/HIDService/hidservice.cpp \
-    Modules/USBController/usbcontroller.cpp \
-    Modules/USBController/usbdreport.cpp \
-    Modules/USBController/usbhandler.cpp \
+    Modules/USBController/HIDTable/hid_defs.c \
+    $$files($$PWD/Modules/USBController/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Log/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Time/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Time/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Debug/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Utils/*.c, true) \
-    Modules/USBController/usbhreport.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -30,11 +27,9 @@ HEADERS += \
     Modules/Exceptions/app_exception.h \
     Modules/USBController/HIDService/hidservice.h \
     Modules/USBController/HIDTable/HIDController.h \
+    Modules/USBController/hidtablesettings.h \
     Modules/USBController/usbcstatus.h \
     Modules/USBController/usbcontroller.h \
-    Modules/USBController/usbdreport.h \
-    Modules/USBController/usbhandler.h \
-    Modules/USBController/usbhreport.h \
     Modules/USBController/HIDTable/HIDTable.h \
     Modules/USBController/HIDTable/HIDTuple.h \
     Modules/USBController/HIDTable/HIDHash.h \
@@ -60,6 +55,8 @@ INCLUDEPATH += $$PWD/Modules/Exceptions
 INCLUDEPATH += $$PWD/Modules/USBController/HIDService
 INCLUDEPATH += $$PWD/Modules/USBController/HIDTable
 INCLUDEPATH += $$PWD/Modules/USBController
+INCLUDEPATH += $$PWD/Modules/USBHReport
+INCLUDEPATH += $$PWD/Modules/USBDReport
 INCLUDEPATH += $$PWD/Modules/libusb/include/libusb-1.0
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Log
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Time

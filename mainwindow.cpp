@@ -3,34 +3,23 @@
 
 #include <QMessageBox>
 
+#include "log.h"
+
 #include "usbcontroller.h"
 
 
-
 Ui::MainWindow* MainWindow::ui = new Ui::MainWindow();
-
-fsm::FiniteStateMachine<MainWindow::fsm_table> MainWindow::fsm;
-USBCStatus MainWindow::curStatus = USBC_RES_OK;
-utl::Timer MainWindow::timer(TIMER_DELAY_MS);
 USBController MainWindow::usbcontroller;
-unsigned MainWindow::errorsCount = 0;
-bool MainWindow::fsmWait = false;
+bool MainWindow::waitResponse = false;
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 {
     ui->setupUi(this);
-    connect();
+    usbcontroller.loadSettings();
 }
 
 MainWindow::~MainWindow() { }
-
-
-void MainWindow::proccess(const USBCStatus& status)
-{
-    curStatus = status;
-    fsm.proccess();
-}
 
 void MainWindow::setError(const QString& str)
 {
@@ -39,179 +28,65 @@ void MainWindow::setError(const QString& str)
     messageBox.setFixedSize(500, 200);
 }
 
-void MainWindow::connect()
-{
-    fsm.push_event(connect_e{});
-
-    usbcontroller.proccess(USB_SEARCH_HANDLER);
-
-    fsmWait = false;
-}
-
-void MainWindow::update()
-{
-    fsm.push_event(update_e{});
-    USBUpdateHandler::update();
-
-    fsm.proccess();
-    usbcontroller.proccess(USB_UPDATE_HANDLER);
-
-    fsmWait = false;
-}
-
-void MainWindow::upgrade()
-{
-    fsm.push_event(upgrade_e{});
-    // TODO: USBUpgradeHandler::upgrade();
-
-    fsm.proccess();
-    usbcontroller.proccess(USB_UPGRADE_HANDLER);
-
-    fsmWait = false;
-}
-
-void MainWindow::_init_s::operator()()
-{
-    fsmWait = false;
-
-    fsm.push_event(success_e{});
-    usbcontroller.proccess();
-}
-
-void MainWindow::_connect_s::operator()()
-{
-    fsmWait = false;
-
-    switch (curStatus) {
-    case USBC_RES_OK:
-        usbcontroller.proccess(USB_SEARCH_HANDLER);
-        break;
-    case USBC_RES_DONE:
-        fsm.push_event(success_e{});
-        usbcontroller.proccess(USB_UPDATE_HANDLER);
-        break;
-    default:
-        fsm.push_event(error_e{});
-        usbcontroller.proccess(USB_SEARCH_HANDLER);
-        break;
-    }
-}
-
-void MainWindow::_load_settings_s::operator()()
-{
-    fsmWait = false;
-
-    if (!timer.wait()) {
-        fsm.push_event(timeout_e{});
-        errorsCount++;
-    }
-
-    if (errorsCount > ERRORS_MAX) {
-        fsm.push_event(error_e{});
-    }
-
-    switch (curStatus) {
-    case USBC_RES_DONE:
-        fsm.push_event(success_e{});
-        usbcontroller.proccess();
-        break;
-    default:
-        timer.start();
-        usbcontroller.proccess(USB_UPDATE_HANDLER);
-        break;
-    }
-}
-
-void MainWindow::_save_settings_s::operator()()
-{
-    fsmWait = false;
-
-    if (!timer.wait()) {
-        fsm.push_event(timeout_e{});
-        errorsCount++;
-    }
-
-    if (errorsCount > ERRORS_MAX) {
-        fsm.push_event(error_e{});
-    }
-
-    switch (curStatus) {
-    case USBC_RES_DONE:
-        fsm.push_event(success_e{});
-        break;
-    default:
-        timer.start();
-        usbcontroller.proccess(USB_UPGRADE_HANDLER);
-        break;
-    }
-}
-
-void MainWindow::_idle_s::operator()()
-{
-    if (fsmWait) {
-        return;
-    }
-
-    fsmWait = true;
-    fsm.proccess();
-}
-
-void MainWindow::_error_s::operator()()
-{
-    if (fsmWait) {
-        return;
-    }
-
-    fsmWait = true;
-    fsm.proccess();
-
-    setError(exceptions::DeviceGroup().message);
-}
-
-void MainWindow::init_ui_a::operator()()
-{
-    // TODO: init UI
-    errorsCount = 0;
-}
-
-void MainWindow::reset_ui_a::operator ()()
-{
-    // TODO: reset UI
-    errorsCount = 0;
-}
-
-void MainWindow::start_timer_a::operator ()()
-{
-    timer.start();
-}
-
-void MainWindow::show_settings_a::operator ()()
-{
-    QString str = std::to_string(*(DeviceSettings::record_period{}())).c_str();
-    ui->record_period->setText(str);
-
-    str = std::to_string(*(DeviceSettings::send_period{}())).c_str();
-    ui->send_period->setText(str);
-}
-
 void MainWindow::on_updateBtn_clicked()
 {
 #if !defined(QT_NO_DEBUG)
     printTagLog(TAG, "update button clicked");
 #endif
-    if (fsmWait) {
-        update();
+    if (!waitResponse) {
+        usbcontroller.loadSettings();
+        waitResponse = true;
     }
 }
-
 
 void MainWindow::on_upgradeBtn_clicked()
 {
 #if !defined(QT_NO_DEBUG)
     printTagLog(TAG, "upgrade button clicked");
 #endif
-    if (fsmWait) {
-        upgrade();
+    if (!waitResponse) {
+        usbcontroller.saveSettings();
+        waitResponse = true;
     }
+}
+
+Ui_MainWindow* MainWindow::getUI()
+{
+    return ui;
+}
+
+void MainWindow::responseProccess(USBRequestType type)
+{
+    waitResponse = false;
+
+    switch (type) {
+    case USB_REQUEST_LOAD_SETTINGS:
+        showSettings();
+        break;
+    case USB_REQUEST_SAVE_SETTINGS:
+        showSettings();
+        break;
+    case USB_REQUEST_LOAD_LOG:
+        MainWindow::setError(exceptions::USBExceptionGroup().message);
+        break;
+    default:
+        throw exceptions::UsbUndefinedBehaviourException();
+    }
+}
+
+void MainWindow::showSettings()
+{
+    ui->record_period->setText(std::to_string(DeviceSettings::record_period{}.get()).c_str());
+    ui->send_period->setText(std::to_string(DeviceSettings::send_period{}.get()).c_str());
+}
+
+void MainWindow::on_record_period_textChanged()
+{
+    DeviceSettings::record_period{}.set(ui->record_period->toPlainText().toUInt());
+}
+
+void MainWindow::on_send_period_textChanged()
+{
+    DeviceSettings::record_period{}.set(ui->send_period->toPlainText().toUInt());
 }
 

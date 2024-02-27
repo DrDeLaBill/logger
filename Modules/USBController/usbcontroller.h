@@ -5,22 +5,29 @@
 #include <memory>
 #include <cstdint>
 #include <variant>
-#include <unordered_map>
+#include <type_traits>
 
 #include <QThread>
 #include <QObject>
 #include <QString>
 
 #include <libusb.h>
-#include "usbhandler.h"
+
+#include "utils.h"
+
 #include "usbcstatus.h"
+#include "HIDController.h"
+#include "hidtablesettings.h"
+#include "DeviceSettings.h"
 
 
-#define USB_IDLE_HANDLER         (QString("IDLE_HANDLER"))
-#define USB_SEARCH_HANDLER       (QString("SEARCH_HANDLER"))
-#define USB_LOAD_RECORD_HANDLER  (QString("LOAD_RECORD_HANDLER"))
-#define USB_UPGRADE_HANDLER      (QString("UPGRADE_HANDLER"))
-#define USB_UPDATE_HANDLER       (QString("UPDATE_HANDLER"))
+enum USBRequestType
+{
+    USB_REQUEST_NONE = 0,
+    USB_REQUEST_LOAD_SETTINGS,
+    USB_REQUEST_SAVE_SETTINGS,
+    USB_REQUEST_LOAD_LOG
+};
 
 
 class USBWorker : public QObject
@@ -28,7 +35,7 @@ class USBWorker : public QObject
     Q_OBJECT
 
 public slots:
-    void doWork(const QString& status);
+    void proccess(const USBRequestType& type);
 
 signals:
     void resultReady(const USBCStatus& status);
@@ -36,27 +43,22 @@ signals:
 private:
     static constexpr char TAG[] = "USBW";
 
-    using handler_v = std::variant<
-        USBIdleHandler,
-        USBSearchHandler,
-        USBLoadRecordHandler,
-        USBUpgradeHandler,
-        USBUpdateHandler
+    using table_settings_t = HIDTable<
+        HIDTuple<uint16_t, DeviceSettings::dv_type>,
+        HIDTuple<uint8_t,  DeviceSettings::sw_id>,
+        HIDTuple<uint8_t,  DeviceSettings::fw_id>,
+        HIDTuple<uint32_t, DeviceSettings::cf_id>,
+        HIDTuple<uint32_t, DeviceSettings::record_period>,
+        HIDTuple<uint32_t, DeviceSettings::send_period>,
+        HIDTuple<uint32_t, DeviceSettings::record_id>,
+        HIDTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
+        HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
+        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
     >;
-    using handler_t = std::unordered_map<
-        QString,
-        handler_v,
-        USBHandlerHash,
-        USBHandlerEqual
-    >;
+    HIDTableSettings<table_settings_t> handlerSettings;
 
-    handler_t handlers = {
-        {USB_IDLE_HANDLER,        USBIdleHandler{}},
-        {USB_SEARCH_HANDLER,      USBSearchHandler{}}, // TODO: like set_table -> set_tuple in FSM
-        {USB_LOAD_RECORD_HANDLER, USBLoadRecordHandler{}},
-        {USB_UPGRADE_HANDLER,     USBUpgradeHandler{}},
-        {USB_UPDATE_HANDLER,      USBUpdateHandler{}}
-    };
+
+    //    TableLog handlerLog;
 
 };
 
@@ -67,25 +69,26 @@ class USBController : public QObject
     QThread workerThread;
 
 private:
-    static constexpr char TAG[] = "USBC";
+    static constexpr char TAG[] = "USBc";
+
+    USBWorker worker;
+
+    static USBRequestType requestType;
 
 public:
     USBController();
     ~USBController();
 
-    void proccess(const QString& status = USB_IDLE_HANDLER);
+    void loadSettings();
+    void saveSettings();
+    void loadLog();
 
-    // TODO: is this needed?
-    // Load data from the device
-    void update();
-    // Load data to the device
-    void upgrade();
 
 public slots:
     void handleResults(const USBCStatus& status);
 
 signals:
-    void operate(const QString& status);
+    void request(const USBRequestType& type);
 
 };
 
