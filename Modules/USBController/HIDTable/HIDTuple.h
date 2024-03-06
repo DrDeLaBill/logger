@@ -75,6 +75,16 @@ struct HIDTuple : HIDTupleBase
     {
         callback_c{}.set(value, index);
     }
+
+    bool isUpdated()
+    {
+        return callback_c::updated;
+    }
+
+    void resetUpdated()
+    {
+        callback_c::updated = false;
+    }
 };
 
 

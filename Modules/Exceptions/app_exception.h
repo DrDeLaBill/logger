@@ -40,9 +40,10 @@ namespace exceptions
     {
     protected:
         const std::unique_ptr<ExceptionGroupBase> group;
-        const std::string message;
 
     public:
+        const std::string message;
+
         ExceptionBase(const std::string& message, const ExceptionGroupBase& group):
             group(std::make_unique<ExceptionGroupBase>(group.message)), message{message} { }
 
@@ -121,6 +122,11 @@ namespace exceptions
     struct DeviceVersionException: public ExceptionBase
     {
         DeviceVersionException(): ExceptionBase("DEVICE_VERSION_ERROR", USBExceptionGroup()) {}
+    };
+
+    struct UnknownDeviceException: public ExceptionBase
+    {
+        UnknownDeviceException(): ExceptionBase("UNKNOWN_DEVICE_ERROR", USBExceptionGroup()) {}
     };
     /* Exceptions end */
 }

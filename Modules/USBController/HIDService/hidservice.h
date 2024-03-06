@@ -10,6 +10,9 @@
 #include "hid_defs.h"
 
 
+#define HID_SERVICE_BEDUG (false)
+
+
 class HIDService
 {
 private:

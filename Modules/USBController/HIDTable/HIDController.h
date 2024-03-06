@@ -105,6 +105,47 @@ public:
         std::visit(lambda, it->second);
     }
 
+    bool isUpdated(const uint16_t key)
+    {
+        auto it = characteristics.find(key);
+        if (it == characteristics.end()) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "HID table not found error");
+            details(key, index);
+            return;
+#else
+            throw new exceptions::TemplateErrorException();
+#endif
+        }
+
+        bool result = false;
+        auto lambda = [&] (auto& tuple) {
+            result = tuple.isUpdated();
+        };
+        std::visit(lambda, it->second);
+
+        return result;
+    }
+
+    void resetUpdated(const uint16_t key)
+    {
+        auto it = characteristics.find(key);
+        if (it == characteristics.end()) {
+#ifdef USE_HAL_DRIVER
+            BEDUG_ASSERT(false, "HID table not found error");
+            details(key, index);
+            return;
+#else
+            throw new exceptions::TemplateErrorException();
+#endif
+        }
+
+        auto lambda = [&] (auto& tuple) {
+            tuple.resetUpdated();
+        };
+        std::visit(lambda, it->second);
+    }
+
     constexpr unsigned maxKey()
     {
         return max_key;

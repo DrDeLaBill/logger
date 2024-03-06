@@ -6,7 +6,6 @@
 
 #include <libusb.h>
 
-#include "log.h"
 #include "mainwindow.h"
 #include "app_exception.h"
 #include "CodeStopwatch.h"
@@ -54,26 +53,18 @@ void USBController::loadLog()
     emit request(requestType);
 }
 
-void USBController::handleResults(const USBCStatus& status)
+void USBController::handleResults(const USBCStatus status)
 {
-#if !defined(QT_NO_DEBUG)
-    printTagLog(TAG, "response: %u", status);
-#endif
-
     if (status != USBC_RES_OK && status != USBC_RES_DONE) {
         MainWindow::setError(exceptions::USBExceptionGroup().message);
     }
 
-    MainWindow::responseProccess(requestType);
+    MainWindow::responseProccess(requestType, status);
     requestType = USB_REQUEST_NONE;
 }
 
-void USBWorker::proccess(const USBRequestType& type)
+void USBWorker::proccess(const USBRequestType type)
 {
-#if !defined(QT_NO_DEBUG)
-    printTagLog(TAG, "request : %u", type);
-#endif
-
     USBCStatus status = USBC_RES_OK;
 
     try {
@@ -103,8 +94,7 @@ void USBWorker::proccess(const USBRequestType& type)
             status = USBC_INTERNAL_ERROR;
         }
     } catch (...) {
-        emit resultReady(USBC_INTERNAL_ERROR);
-        throw;
+        status = USBC_INTERNAL_ERROR;
     }
 
     emit resultReady(status);

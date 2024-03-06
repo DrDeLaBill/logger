@@ -19,102 +19,123 @@ bool DeviceSettings::check()
 }
 
 
-void DeviceSettings::dv_type::set(uint64_t value, unsigned)
+bool DeviceSettings::dv_type::updated = false;
+void DeviceSettings::dv_type::set(uint32_t value, unsigned)
 {
     settings.dv_type = value;
 }
 
-uint64_t DeviceSettings::dv_type::get(unsigned)
+uint32_t DeviceSettings::dv_type::get(unsigned)
 {
     return settings.dv_type;
 }
 
-void DeviceSettings::sw_id::set(uint64_t value, unsigned)
+bool DeviceSettings::sw_id::updated = false;
+void DeviceSettings::sw_id::set(uint32_t value, unsigned)
 {
     settings.sw_id = value;
 }
 
-uint64_t DeviceSettings::sw_id::get(unsigned)
+uint32_t DeviceSettings::sw_id::get(unsigned)
 {
     return settings.sw_id;
 }
 
-void DeviceSettings::fw_id::set(uint64_t value, unsigned)
+bool DeviceSettings::fw_id::updated = false;
+void DeviceSettings::fw_id::set(uint32_t value, unsigned)
 {
     settings.fw_id = value;
 }
 
-uint64_t DeviceSettings::fw_id::get(unsigned)
+uint32_t DeviceSettings::fw_id::get(unsigned)
 {
     return settings.fw_id;
 }
 
-void DeviceSettings::cf_id::set(uint64_t value, unsigned)
+bool DeviceSettings::cf_id::updated = false;
+void DeviceSettings::cf_id::set(uint32_t value, unsigned)
 {
     settings.cf_id = value;
 }
 
-uint64_t DeviceSettings::cf_id::get(unsigned)
+uint32_t DeviceSettings::cf_id::get(unsigned)
 {
     return settings.cf_id;
 }
 
-void DeviceSettings::record_period::set(uint64_t value, unsigned)
+bool DeviceSettings::record_period::updated = false;
+void DeviceSettings::record_period::set(uint32_t value, unsigned)
 {
     settings.record_period = value;
 }
 
-uint64_t DeviceSettings::record_period::get(unsigned)
+uint32_t DeviceSettings::record_period::get(unsigned)
 {
     return settings.record_period;
 }
 
-void DeviceSettings::send_period::set(uint64_t value, unsigned)
+bool DeviceSettings::send_period::updated = false;
+void DeviceSettings::send_period::set(uint32_t value, unsigned)
 {
     settings.send_period = value;
 }
 
-uint64_t DeviceSettings::send_period::get(unsigned)
+uint32_t DeviceSettings::send_period::get(unsigned)
 {
     return settings.send_period;
 }
 
-void DeviceSettings::record_id::set(uint64_t value, unsigned)
+bool DeviceSettings::record_id::updated = false;
+void DeviceSettings::record_id::set(uint32_t value, unsigned)
 {
     settings.record_id = value;
 }
 
-uint64_t DeviceSettings::record_id::get(unsigned)
+uint32_t DeviceSettings::record_id::get(unsigned)
 {
     return settings.record_id;
 }
 
-void DeviceSettings::modbus1_status::set(uint64_t value, unsigned index)
+bool DeviceSettings::modbus1_status::updated = false;
+void DeviceSettings::modbus1_status::set(uint32_t value, unsigned index)
 {
     settings.modbus1_status[index] = value;
 }
 
-uint64_t DeviceSettings::modbus1_status::get(unsigned index)
+uint32_t DeviceSettings::modbus1_status::get(unsigned index)
 {
     return settings.modbus1_status[index];
 }
 
-void DeviceSettings::modbus1_value_reg::set(uint64_t value, unsigned index)
+bool DeviceSettings::modbus1_value_reg::updated = false;
+void DeviceSettings::modbus1_value_reg::set(uint32_t value, unsigned index)
 {
     settings.modbus1_value_reg[index] = value;
 }
 
-uint64_t DeviceSettings::modbus1_value_reg::get(unsigned index)
+uint32_t DeviceSettings::modbus1_value_reg::get(unsigned index)
 {
     return settings.modbus1_value_reg[index];
 }
 
-void DeviceSettings::modbus1_id_reg::set(uint64_t value, unsigned index)
+bool DeviceSettings::modbus1_id_reg::updated = false;
+void DeviceSettings::modbus1_id_reg::set(uint32_t value, unsigned index)
 {
     settings.modbus1_id_reg[index] = value;
 }
 
-uint64_t DeviceSettings::modbus1_id_reg::get(unsigned index)
+uint32_t DeviceSettings::modbus1_id_reg::get(unsigned index)
 {
     return settings.modbus1_id_reg[index];
+}
+
+bool DeviceSettings::time::updated = false;
+void DeviceSettings::time::set(uint32_t value, unsigned)
+{
+    settings.time = value;
+}
+
+uint32_t DeviceSettings::time::get(unsigned)
+{
+    return settings.time;
 }

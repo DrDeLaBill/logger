@@ -51,9 +51,16 @@ private slots:
 
     void on_send_period_textChanged();
 
+    void on_updateTimeBtn_clicked();
+
 public:
-    static Ui_MainWindow* getUI();
-    static void responseProccess(USBRequestType type);
+    static void responseProccess(const USBRequestType type, const USBCStatus status);
+
+    static void setLoading();
+    static void resetLoading();
+
+    static void disableAll();
+    static void enableAll();
 
 };
 

@@ -82,6 +82,10 @@ private:
         HIDService::init();
 
         do {
+            if (errors_count > ERRORS_COUNT_MAX) {
+                result = USBC_RES_ERROR;
+                fsm.push_event(error_e{});
+            }
             fsm.proccess();
         } while (!fsm.is_state(idle_s{}));
 
@@ -170,14 +174,13 @@ void HIDTableSettings<Table>::_update_s::operator()(void) const
         HIDService::sendReport(HID_VENDOR_ID, HID_PRODUCT_ID, report);
     } catch (...) {
         result = USBC_RES_ERROR;
-        if (errors_count > ERRORS_COUNT_MAX) {
-            throw;
-        }
         fsm.push_event(timeout_e{});
         return;
     }
 
-    hid_table.setValue(characteristic_id, USBDReport::getReport().data, index);
+    report_pack_t& response = USBDReport::getReport();
+    hid_table.setValue(response.characteristic_id, response.data, response.index);
+    index = response.index;
 
     fsm.push_event(success_e{});
 }
@@ -199,6 +202,11 @@ void HIDTableSettings<Table>::_upgrade_s::operator()(void) const
         return;
     }
 
+    if (!hid_table.isUpdated(characteristic_id)) {
+        fsm.push_event(success_e{});
+        return;
+    }
+
     report_pack_t report = {};
     report.characteristic_id = characteristic_id;
     report.index = index;
@@ -210,14 +218,14 @@ void HIDTableSettings<Table>::_upgrade_s::operator()(void) const
         HIDService::sendReport(HID_VENDOR_ID, HID_PRODUCT_ID, report);
     } catch (...) {
         result = USBC_RES_ERROR;
-        if (errors_count > ERRORS_COUNT_MAX) {
-            throw;
-        }
         fsm.push_event(timeout_e{});
         return;
     }
 
-    hid_table.setValue(characteristic_id, USBDReport::getReport().data, index);
+    report_pack_t& response = USBDReport::getReport();
+    hid_table.setValue(response.characteristic_id, response.data, response.index);
+    index = response.index;
+    hid_table.resetUpdated(characteristic_id);
 
     fsm.push_event(success_e{});
 }

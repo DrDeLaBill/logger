@@ -98,7 +98,7 @@ void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_
 
     closeSession();
 
-#if !defined(QT_NO_DEBUG)
+#if !defined(QT_NO_DEBUG) && HID_SERVICE_BEDUG
     printTagLog(TAG, "HOST REPORT:");
     hid_report_show(&USBHReport::getReport());
     printTagLog(TAG, "DEVICE REPORT:");
@@ -150,7 +150,7 @@ void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
 
     closeSession();
 
-#if !defined(QT_NO_DEBUG)
+#if !defined(QT_NO_DEBUG) && HID_SERVICE_BEDUG
     printTagLog(TAG, "DEVICE REPORT:");
     hid_report_show(&USBDReport::getReport());
 #endif

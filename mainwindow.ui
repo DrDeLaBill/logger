@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>496</height>
+    <height>502</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -117,7 +117,7 @@ QPushButton::hover {
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>70</y>
+          <y>130</y>
           <width>361</width>
           <height>51</height>
          </rect>
@@ -167,7 +167,7 @@ QPushButton::hover {
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>120</y>
+          <y>180</y>
           <width>361</width>
           <height>51</height>
          </rect>
@@ -213,7 +213,7 @@ QPushButton::hover {
          </property>
         </widget>
        </widget>
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="device_label">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -228,13 +228,13 @@ QPushButton::hover {
          </font>
         </property>
         <property name="text">
-         <string>Logger</string>
+         <string>Device</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="version_label">
         <property name="geometry">
          <rect>
           <x>180</x>
@@ -251,6 +251,74 @@ QPushButton::hover {
         <property name="text">
          <string>not found</string>
         </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>80</y>
+          <width>361</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <widget class="QLabel" name="label_time">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>10</y>
+           <width>151</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>time</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+        <widget class="QLabel" name="time">
+         <property name="geometry">
+          <rect>
+           <x>160</x>
+           <y>10</y>
+           <width>171</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>13</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>00-00-00 00:00:00</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="updateTimeBtn">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>10</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>U</string>
+         </property>
+        </widget>
        </widget>
       </widget>
      </item>

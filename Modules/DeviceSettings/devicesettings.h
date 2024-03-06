@@ -37,61 +37,80 @@ struct DeviceSettings
         uint16_t modbus1_value_reg[MODBUS_SENS_COUNT];
         // MODBUS 1 sensor register IDs for setting new sensor ids
         uint16_t modbus1_id_reg   [MODBUS_SENS_COUNT];
+
+        // Device time
+        uint32_t time;
     } settings_t;
 
     static settings_t settings;
 
-    bool check();
+    static bool check();
 
     struct dv_type
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct sw_id
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct fw_id
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct cf_id
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct record_period
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct send_period
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct record_id
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct modbus1_status
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct modbus1_value_reg
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
     struct modbus1_id_reg
     {
-        void set(uint64_t value, unsigned index = 0);
-        uint64_t get(unsigned index = 0);
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
+    };
+    struct time
+    {
+        static bool updated;
+        void set(uint32_t value, unsigned index = 0);
+        uint32_t get(unsigned index = 0);
     };
 };
 

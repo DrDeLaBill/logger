@@ -54,9 +54,8 @@ INCLUDEPATH += $$PWD/Modules/DeviceSettings
 INCLUDEPATH += $$PWD/Modules/Exceptions
 INCLUDEPATH += $$PWD/Modules/USBController/HIDService
 INCLUDEPATH += $$PWD/Modules/USBController/HIDTable
+INCLUDEPATH += $$PWD/Modules/USBController/USBReport
 INCLUDEPATH += $$PWD/Modules/USBController
-INCLUDEPATH += $$PWD/Modules/USBHReport
-INCLUDEPATH += $$PWD/Modules/USBDReport
 INCLUDEPATH += $$PWD/Modules/libusb/include/libusb-1.0
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Log
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Time
@@ -65,5 +64,6 @@ INCLUDEPATH += $$PWD/Modules/Utils/utils/Utils
 INCLUDEPATH += $$PWD/Modules/Utils/utils/FSM
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Buffer
 INCLUDEPATH += $$PWD/Modules/Utils/utils/TypeList
+INCLUDEPATH += $$PWD/Modules/Utils/utils/HALDEFS
 
 LIBS        += $$files($$PWD/Modules/libusb/lib/*.a, true)

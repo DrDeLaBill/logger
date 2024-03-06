@@ -35,10 +35,10 @@ class USBWorker : public QObject
     Q_OBJECT
 
 public slots:
-    void proccess(const USBRequestType& type);
+    void proccess(const USBRequestType type);
 
 signals:
-    void resultReady(const USBCStatus& status);
+    void resultReady(const USBCStatus status);
 
 private:
     static constexpr char TAG[] = "USBW";
@@ -53,7 +53,8 @@ private:
         HIDTuple<uint32_t, DeviceSettings::record_id>,
         HIDTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
         HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
+        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>,
+        HIDTuple<uint32_t, DeviceSettings::time>
     >;
     HIDTableSettings<table_settings_t> handlerSettings;
 
@@ -85,10 +86,10 @@ public:
 
 
 public slots:
-    void handleResults(const USBCStatus& status);
+    void handleResults(const USBCStatus status);
 
 signals:
-    void request(const USBRequestType& type);
+    void request(const USBRequestType type);
 
 };
 
