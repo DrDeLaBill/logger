@@ -2,9 +2,10 @@
 #define MAINWINDOW_H
 
 
-#include <QMainWindow>
-
 #include <memory>
+
+#include <QTimer>
+#include <QMainWindow>
 
 #include "ui_mainwindow.h"
 
@@ -12,7 +13,7 @@
 #include "FiniteStateMachine.h"
 
 #include "usbcontroller.h"
-#include "hidtablesettings.h"
+#include "hidtableworker.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -33,6 +34,8 @@ public:
     static void upgrade();
 
 private:
+    static QTimer* saveTimer;
+
     static void showSettings();
     static void clearSettings();
 
@@ -40,7 +43,7 @@ protected:
     static constexpr char TAG[] = "MAIN";
 
     static Ui::MainWindow* ui;
-    static bool waitResponse;
+    static USBRequestType requestType;
     static USBController usbcontroller;
 
 private slots:
@@ -61,6 +64,10 @@ public:
 
     static void disableAll();
     static void enableAll();
+
+public slots:
+    void onInfoTimeout();
+    void onSaveTimeout();
 
 };
 

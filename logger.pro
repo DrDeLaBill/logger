@@ -9,8 +9,6 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    Modules/DeviceRecord/devicerecord.cpp \
-    Modules/DeviceSettings/devicesettings.cpp \
     Modules/USBController/HIDTable/hid_defs.c \
     $$files($$PWD/Modules/USBController/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Log/*.cpp, true) \
@@ -18,16 +16,16 @@ SOURCES += \
     $$files($$PWD/Modules/Utils/utils/Time/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Debug/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Utils/*.c, true) \
+    $$files($$PWD/Modules/DeviceRecord/*.cpp, true) \
+    $$files($$PWD/Modules/DeviceInterface/*.cpp, true) \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    Modules/DeviceRecord/devicerecord.h \
-    Modules/DeviceSettings/devicesettings.h \
     Modules/Exceptions/app_exception.h \
     Modules/USBController/HIDService/hidservice.h \
     Modules/USBController/HIDTable/HIDController.h \
-    Modules/USBController/hidtablesettings.h \
+    Modules/USBController/hidtableworker.h \
     Modules/USBController/usbcstatus.h \
     Modules/USBController/usbcontroller.h \
     Modules/USBController/HIDTable/HIDTable.h \
@@ -49,8 +47,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 # Custom includes
-INCLUDEPATH += $$PWD/Modules/DeviceRecord
-INCLUDEPATH += $$PWD/Modules/DeviceSettings
+INCLUDEPATH += $$PWD/Modules/DeviceInterface
 INCLUDEPATH += $$PWD/Modules/Exceptions
 INCLUDEPATH += $$PWD/Modules/USBController/HIDService
 INCLUDEPATH += $$PWD/Modules/USBController/HIDTable

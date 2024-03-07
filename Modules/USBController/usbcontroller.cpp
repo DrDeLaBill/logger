@@ -12,6 +12,8 @@
 
 
 USBRequestType USBController::requestType = USB_REQUEST_NONE;
+USBWorker::settings_worker_t USBWorker::handlerSettings;
+USBWorker::info_worker_t USBWorker::handlerInfo;
 
 
 USBController::USBController(): worker()
@@ -47,6 +49,18 @@ void USBController::saveSettings()
     emit request(requestType);
 }
 
+void USBController::loadInfo()
+{
+    requestType = USB_REQUEST_LOAD_INFO;
+    emit request(requestType);
+}
+
+void USBController::saveInfo()
+{
+    requestType = USB_REQUEST_SAVE_INFO;
+    emit request(requestType);
+}
+
 void USBController::loadLog()
 {
     requestType = USB_REQUEST_LOAD_LOG;
@@ -74,6 +88,12 @@ void USBWorker::proccess(const USBRequestType type)
             break;
         case USB_REQUEST_SAVE_SETTINGS:
             status = handlerSettings.save();
+            break;
+        case USB_REQUEST_LOAD_INFO:
+            status = handlerInfo.load();
+            break;
+        case USB_REQUEST_SAVE_INFO:
+            status = handlerInfo.save();
             break;
         case USB_REQUEST_LOAD_LOG:
             status = USBC_INTERNAL_ERROR;

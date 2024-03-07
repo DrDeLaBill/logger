@@ -128,14 +128,3 @@ uint32_t DeviceSettings::modbus1_id_reg::get(unsigned index)
 {
     return settings.modbus1_id_reg[index];
 }
-
-bool DeviceSettings::time::updated = false;
-void DeviceSettings::time::set(uint32_t value, unsigned)
-{
-    settings.time = value;
-}
-
-uint32_t DeviceSettings::time::get(unsigned)
-{
-    return settings.time;
-}

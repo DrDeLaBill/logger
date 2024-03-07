@@ -14,6 +14,7 @@
 
 struct DeviceSettings
 {
+public:
     typedef struct _settings_t {
         // Device type
         uint16_t  dv_type;
@@ -42,8 +43,10 @@ struct DeviceSettings
         uint32_t time;
     } settings_t;
 
+protected:
     static settings_t settings;
 
+public:
     static bool check();
 
     struct dv_type
@@ -101,12 +104,6 @@ struct DeviceSettings
         uint32_t get(unsigned index = 0);
     };
     struct modbus1_id_reg
-    {
-        static bool updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
-    };
-    struct time
     {
         static bool updated;
         void set(uint32_t value, unsigned index = 0);

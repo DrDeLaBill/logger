@@ -10,22 +10,34 @@
 #include "hal_defs.h"
 
 #include "usbcontroller.h"
+#include "devicesettings.h"
 
 
-#define TIME_STRING_LEN (25)
+#define TIME_STRING_LEN      (25)
+#define INFO_TIMEOUT_MS      (200)
+#define SAVE_TIMEOUT_MS      (5000)
 
 
 Ui::MainWindow* MainWindow::ui = new Ui::MainWindow();
+USBRequestType MainWindow::requestType = USB_REQUEST_NONE;
 USBController MainWindow::usbcontroller;
-bool MainWindow::waitResponse = false;
+QTimer* MainWindow::saveTimer;
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 {
     ui->setupUi(this);
     MainWindow::setLoading();
+    requestType = USB_REQUEST_LOAD_SETTINGS;
     usbcontroller.loadSettings();
     disableAll();
+
+    QTimer* infoTimer = new QTimer(this);
+    QObject::connect(infoTimer, QTimer::timeout, this, MainWindow::onInfoTimeout);
+    infoTimer->start(INFO_TIMEOUT_MS);
+
+    saveTimer = new QTimer(this);
+    QObject::connect(saveTimer, QTimer::timeout, this, MainWindow::onSaveTimeout);
 }
 
 MainWindow::~MainWindow() { }
@@ -41,29 +53,67 @@ void MainWindow::setError(const QString& str)
     disableAll();
 }
 
+void MainWindow::on_updateTimeBtn_clicked()
+{
+    if (saveTimer->isActive()) {
+        return;
+    }
+
+    DeviceInfo::time{}.set(static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00));
+    DeviceInfo::time::updated = true;
+
+    saveTimer->start(SAVE_TIMEOUT_MS);
+    MainWindow::setLoading();
+    usbcontroller.saveInfo();
+    requestType = USB_REQUEST_SAVE_INFO;
+}
+
 void MainWindow::on_updateBtn_clicked()
 {
-    if (!waitResponse) {
-        MainWindow::setLoading();
-        usbcontroller.loadSettings();
-        waitResponse = true;
+    if (saveTimer->isActive()) {
+        return;
     }
+    MainWindow::setLoading();
+    usbcontroller.loadSettings();
+    requestType = USB_REQUEST_LOAD_SETTINGS;
 }
 
 void MainWindow::on_upgradeBtn_clicked()
 {
-    if (!waitResponse) {
-        MainWindow::setLoading();
-        usbcontroller.saveSettings();
-        waitResponse = true;
+    if (saveTimer->isActive()) {
+        return;
     }
+    saveTimer->start(SAVE_TIMEOUT_MS);
+    MainWindow::setLoading();
+    usbcontroller.saveSettings();
+    requestType = USB_REQUEST_SAVE_SETTINGS;
+}
+
+void MainWindow::onInfoTimeout()
+{
+    if (saveTimer->isActive()) {
+        return;
+    }
+    if (requestType == USB_REQUEST_NONE) {
+        usbcontroller.loadInfo();
+        requestType = USB_REQUEST_LOAD_INFO;
+    }
+}
+
+void MainWindow::onSaveTimeout()
+{
+    saveTimer->stop();
 }
 
 void MainWindow::responseProccess(const USBRequestType type, const USBCStatus status)
 {
-    waitResponse = false;
+    if (saveTimer->isActive()) {
+        requestType = USB_REQUEST_NONE;
+        return;
+    }
 
     if (status != USBC_RES_DONE) {
+        requestType = USB_REQUEST_NONE;
         return;
     }
 
@@ -71,6 +121,7 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
 
     if (!DeviceSettings::check()) {
         MainWindow::setError(exceptions::UnknownDeviceException().message.c_str());
+        requestType = USB_REQUEST_NONE;
         return;
     }
 
@@ -81,12 +132,21 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
     case USB_REQUEST_SAVE_SETTINGS:
         showSettings();
         break;
+    case USB_REQUEST_LOAD_INFO:
+        showSettings();
+        break;
+    case USB_REQUEST_SAVE_INFO:
+        showSettings();
+        break;
     case USB_REQUEST_LOAD_LOG:
         MainWindow::setError(exceptions::USBExceptionGroup().message);
         break;
     default:
-        throw exceptions::UsbUndefinedBehaviourException();
+        MainWindow::setError(exceptions::UsbUndefinedBehaviourException().what());
+        break;
     }
+
+    requestType = USB_REQUEST_NONE;
 }
 
 void MainWindow::disableAll()
@@ -111,13 +171,7 @@ void MainWindow::enableAll()
 
 void MainWindow::showSettings()
 {
-    enableAll();
-
-    ui->device_label->setText("Logger");
-    std::string version = "v0." + std::to_string(DeviceSettings::fw_id{}.get()) + "." + std::to_string(DeviceSettings::sw_id{}.get());
-    ui->version_label->setText(version.c_str());
-
-    std::time_t tick = (std::time_t)(TIMESTAMP2000_01_01_00_00_00 + static_cast<uint64_t>(DeviceSettings::time{}.get()));
+    std::time_t tick = (std::time_t)(TIMESTAMP2000_01_01_00_00_00 + static_cast<uint64_t>(DeviceInfo::time{}.get()));
     struct tm tm;
     char strTime[TIME_STRING_LEN] = {};
     tm = *(std::localtime(&tick));
@@ -125,6 +179,16 @@ void MainWindow::showSettings()
     ui->updateTimeBtn->blockSignals(true);
     ui->time->setText(strTime);
     ui->updateTimeBtn->blockSignals(false);
+
+    if (requestType == USB_REQUEST_LOAD_INFO) {
+        return;
+    }
+
+    enableAll();
+
+    ui->device_label->setText("Logger");
+    std::string version = "v0." + std::to_string(DeviceSettings::fw_id{}.get()) + "." + std::to_string(DeviceSettings::sw_id{}.get());
+    ui->version_label->setText(version.c_str());
 
     ui->record_period->blockSignals(true);
     ui->record_period->setText(std::to_string(DeviceSettings::record_period{}.get()).c_str());
@@ -150,17 +214,13 @@ void MainWindow::on_send_period_textChanged()
 void MainWindow::setLoading()
 {
     ui->statusbar->showMessage("Loading...");
+    // TODO: load screen
+    disableAll();
 }
 
 void MainWindow::resetLoading()
 {
     ui->statusbar->showMessage("Ready");
-}
-
-void MainWindow::on_updateTimeBtn_clicked()
-{
-    DeviceSettings::time{}.set(static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00));
-    DeviceSettings::time::updated = true;
-    ui->upgradeBtn->click();
+    enableAll();
 }
 

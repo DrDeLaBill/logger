@@ -9,6 +9,7 @@
 
 struct DeviceRecord
 {
+public:
     struct record_t {
         // Record ID
         uint32_t id;
@@ -19,7 +20,10 @@ struct DeviceRecord
         uint16_t values[MODBUS_SENS_COUNT];
     };
 
+protected:
     static record_t record;
+
+public:
 
     struct id     { uint32_t* operator()() { return &record.id; } };
     struct time   { uint32_t* operator()() { return &record.time; } };

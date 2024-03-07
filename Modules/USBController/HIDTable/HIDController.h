@@ -22,8 +22,6 @@ template<class Table>
 struct HIDController
 {
 private:
-    uint16_t max_key;
-
     static_assert(std::is_base_of<HIDTableBase, Table>::value, "Template class must be HIDTable");
 
     using tuple_p = typename Table::tuple_p;
@@ -33,6 +31,8 @@ private:
         uint16_t,
         tuple_v
     >;
+
+    uint16_t currID;
 
     void details(const uint16_t key, const uint8_t index)
     {
@@ -45,7 +45,7 @@ private:
     void set_table(utl::simple_list_t<TuplePacks...>)
     {
         (set_tuple(utl::getType<TuplePacks>{}), ...);
-        max_key--;
+        currID--;
     }
 
     template<class TuplePack>
@@ -53,15 +53,15 @@ private:
     {
         using tuple_t = typename decltype(tuplePack)::TYPE;
 
-        characteristics.insert({max_key++, tuple_t{}});
+        characteristics.insert({currID++, tuple_t{}});
     }
 
 public:
     tuple_t characteristics;
 
-    HIDController()
+    HIDController(const uint16_t startKey = HID_FIRST_KEY)
     {
-        max_key = HID_FIRST_KEY;
+        currID = startKey;
         set_table(tuple_p{});
     }
 
@@ -146,11 +146,6 @@ public:
         std::visit(lambda, it->second);
     }
 
-    constexpr unsigned maxKey()
-    {
-        return max_key;
-    }
-
     constexpr unsigned characteristicLength(uint16_t characteristic_id)
     {
         auto it = characteristics.find(characteristic_id);
@@ -172,6 +167,11 @@ public:
         std::visit(lambda, it->second);
 
         return result;
+    }
+
+    static constexpr unsigned count()
+    {
+        return Table::count();
     }
 
 };

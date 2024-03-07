@@ -1,5 +1,5 @@
-#ifndef HIDTABLESETTINGS_H
-#define HIDTABLESETTINGS_H
+#ifndef HIDTABLEWORKER_H
+#define HIDTABLEWORKER_H
 
 
 #include "Timer.h"
@@ -12,12 +12,12 @@
 #include "HIDController.h"
 
 
-template<class Table>
-struct HIDTableSettings
+template<class Table, uint16_t START_ID>
+struct HIDTableWorker
 {
     static_assert(
         !utl::empty(typename utl::typelist_t<Table>::RESULT{}),
-        "HIDTableSettings must not be empty"
+        "HIDTableWorker must not be empty"
     );
 
 protected:
@@ -98,6 +98,11 @@ protected:
     static fsm::FiniteStateMachine<fsm_table> fsm;
 
 public:
+    static constexpr uint16_t maxID()
+    {
+        return START_ID + HIDController<Table>::count() - 1;
+    }
+
     USBCStatus load() const
     {
         fsm.push_event(update_e{});
@@ -113,42 +118,42 @@ public:
     }
 };
 
-template<class Table>
-fsm::FiniteStateMachine<typename HIDTableSettings<Table>::fsm_table> HIDTableSettings<Table>::fsm;
+template<class Table, uint16_t START_ID>
+fsm::FiniteStateMachine<typename HIDTableWorker<Table, START_ID>::fsm_table> HIDTableWorker<Table, START_ID>::fsm;
 
-template<class Table>
-HIDController<Table> HIDTableSettings<Table>::hid_table;
+template<class Table, uint16_t START_ID>
+HIDController<Table> HIDTableWorker<Table, START_ID>::hid_table(START_ID);
 
-template<class Table>
-uint16_t HIDTableSettings<Table>::characteristic_id = HID_FIRST_KEY;
+template<class Table, uint16_t START_ID>
+uint16_t HIDTableWorker<Table, START_ID>::characteristic_id = START_ID;
 
-template<class Table>
-unsigned HIDTableSettings<Table>::errors_count = 0;
+template<class Table, uint16_t START_ID>
+unsigned HIDTableWorker<Table, START_ID>::errors_count = 0;
 
-template<class Table>
-USBCStatus HIDTableSettings<Table>::result = USBC_RES_OK;
+template<class Table, uint16_t START_ID>
+USBCStatus HIDTableWorker<Table, START_ID>::result = USBC_RES_OK;
 
-template<class Table>
-uint8_t HIDTableSettings<Table>::index = 0;
+template<class Table, uint16_t START_ID>
+uint8_t HIDTableWorker<Table, START_ID>::index = 0;
 
-template<class Table>
-utl::Timer HIDTableSettings<Table>::timer(HID_DELAY_MS);
+template<class Table, uint16_t START_ID>
+utl::Timer HIDTableWorker<Table, START_ID>::timer(HID_DELAY_MS);
 
-template<class Table>
-void HIDTableSettings<Table>::_init_s::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::_init_s::operator()(void) const
 {
     fsm.push_event(success_e{});
     result = USBC_RES_OK;
 }
 
-template<class Table>
-void HIDTableSettings<Table>::_idle_s::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::_idle_s::operator()(void) const
 {
 
 }
 
-template<class Table>
-void HIDTableSettings<Table>::_update_s::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
 {
     result = USBC_RES_OK;
 
@@ -158,7 +163,7 @@ void HIDTableSettings<Table>::_update_s::operator()(void) const
         return;
     }
 
-    if (characteristic_id > hid_table.maxKey()) {
+    if (characteristic_id > maxID()) {
         fsm.push_event(end_e{});
         result = USBC_RES_DONE;
         return;
@@ -185,8 +190,8 @@ void HIDTableSettings<Table>::_update_s::operator()(void) const
     fsm.push_event(success_e{});
 }
 
-template<class Table>
-void HIDTableSettings<Table>::_upgrade_s::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
 {
     result = USBC_RES_OK;
 
@@ -196,7 +201,7 @@ void HIDTableSettings<Table>::_upgrade_s::operator()(void) const
         return;
     }
 
-    if (characteristic_id > hid_table.maxKey()) {
+    if (characteristic_id > maxID()) {
         fsm.push_event(end_e{});
         result = USBC_RES_DONE;
         return;
@@ -230,18 +235,18 @@ void HIDTableSettings<Table>::_upgrade_s::operator()(void) const
     fsm.push_event(success_e{});
 }
 
-template<class Table>
-void HIDTableSettings<Table>::init_characteristics_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::init_characteristics_a::operator()(void) const
 {
     fsm.clear_events();
-    characteristic_id = HID_FIRST_KEY;
+    characteristic_id = START_ID;
     index = 0;
     errors_count = 0;
     timer.start();
 }
 
-template<class Table>
-void HIDTableSettings<Table>::iterate_characteristics_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void) const
 {
     index++;
     if (index >= hid_table.characteristicLength(characteristic_id)) {
@@ -253,31 +258,31 @@ void HIDTableSettings<Table>::iterate_characteristics_a::operator()(void) const
     timer.start();
 }
 
-template<class Table>
-void HIDTableSettings<Table>::start_init_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::start_init_a::operator()(void) const
 {
     fsm.clear_events();
 }
 
-template<class Table>
-void HIDTableSettings<Table>::start_idle_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::start_idle_a::operator()(void) const
 {
     fsm.clear_events();
 }
 
-template<class Table>
-void HIDTableSettings<Table>::count_error_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::count_error_a::operator()(void) const
 {
     fsm.clear_events();
     errors_count++;
     timer.start();
 }
 
-template<class Table>
-void HIDTableSettings<Table>::reset_usb_a::operator()(void) const
+template<class Table, uint16_t START_ID>
+void HIDTableWorker<Table, START_ID>::reset_usb_a::operator()(void) const
 {
     // TODO: reset usb
     throw exceptions::UsbException();
 }
 
-#endif // HIDTABLESETTINGS_H
+#endif // HIDTableWorker_H
