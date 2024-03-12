@@ -1,8 +1,24 @@
 #include "devicesettings.h"
 
+#include "utils.h"
+
 
 DeviceSettings::settings_t DeviceSettings::settings = {};
 
+
+unsigned DeviceSettings::getIndex(const unsigned index)
+{
+    unsigned counter = __arr_len(settings_t::modbus1_status);
+    bool found = false;
+    for (unsigned i = index; i < __arr_len(settings_t::modbus1_status); i++) {
+        if (modbus1_status{}.get(i) != SETTINGS_SENSOR_EMPTY) {
+            counter = index;
+            found= true;
+            break;
+        }
+    }
+    return counter;
+}
 
 bool DeviceSettings::check()
 {

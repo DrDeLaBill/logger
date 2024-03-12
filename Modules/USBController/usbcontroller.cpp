@@ -73,7 +73,8 @@ void USBController::handleResults(const USBCStatus status)
         MainWindow::setError(exceptions::USBExceptionGroup().message);
     }
 
-    MainWindow::responseProccess(requestType, status);
+
+    emit responseReady(requestType, status);
     requestType = USB_REQUEST_NONE;
 }
 

@@ -3,8 +3,10 @@
 
 
 #include <memory>
+#include <vector>
 
 #include <QTimer>
+#include <QGroupBox>
 #include <QMainWindow>
 
 #include "ui_mainwindow.h"
@@ -12,6 +14,8 @@
 #include "Timer.h"
 #include "FiniteStateMachine.h"
 
+#include "sensorbox.h"
+#include "sensorlist.h"
 #include "usbcontroller.h"
 #include "hidtableworker.h"
 
@@ -34,10 +38,15 @@ public:
     static void upgrade();
 
 private:
-    static QTimer* saveTimer;
+    static std::vector<QMetaObject::Connection> m_sensorConnection;
 
-    static void showSettings();
-    static void clearSettings();
+    static QTimer* saveTimer;
+    static bool needReconnectSlots;
+
+    void showSettings();
+    void clearSettings();
+    void clearSensors();
+    void updateScrollBar();
 
 protected:
     static constexpr char TAG[] = "MAIN";
@@ -56,18 +65,25 @@ private slots:
 
     void on_updateTimeBtn_clicked();
 
+    void on_verticalScrollBar_valueChanged(int value);
+
+    void onInfoTimeout();
+    void onSaveTimeout();
+
+    void onSaveSensor(const SensorData& sensorData);
+
 public:
-    static void responseProccess(const USBRequestType type, const USBCStatus status);
+    static SensorList* sensorListBox;
+    static SensorBox* firstSensor;
+    static std::vector<SensorBox> sensors;
+
+    void responseProccess(const USBRequestType type, const USBCStatus status);
 
     static void setLoading();
     static void resetLoading();
 
     static void disableAll();
     static void enableAll();
-
-public slots:
-    void onInfoTimeout();
-    void onSaveTimeout();
 
 };
 

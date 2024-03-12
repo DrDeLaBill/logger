@@ -101,6 +101,7 @@ public slots:
 
 signals:
     void request(const USBRequestType type);
+    void responseReady(const USBRequestType type, const USBCStatus status);
 
 };
 

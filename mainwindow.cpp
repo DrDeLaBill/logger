@@ -4,7 +4,10 @@
 #include <ctime>
 #include <iostream> // TODO
 
+#include <QtCore>
+#include <QWidget>
 #include <QMessageBox>
+#include <QWheelEvent>
 
 #include "log.h"
 #include "hal_defs.h"
@@ -22,15 +25,26 @@ Ui::MainWindow* MainWindow::ui = new Ui::MainWindow();
 USBRequestType MainWindow::requestType = USB_REQUEST_NONE;
 USBController MainWindow::usbcontroller;
 QTimer* MainWindow::saveTimer;
+bool MainWindow::needReconnectSlots = false;
+SensorList* MainWindow::sensorListBox;
+SensorBox* MainWindow::firstSensor;
+std::vector<SensorBox> MainWindow::sensors;
+std::vector<QMetaObject::Connection> MainWindow::m_sensorConnection;
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 {
     ui->setupUi(this);
-    MainWindow::setLoading();
-    requestType = USB_REQUEST_LOAD_SETTINGS;
-    usbcontroller.loadSettings();
+
+    QObject::connect(&usbcontroller, &usbcontroller.responseReady, this, responseProccess);
+
     disableAll();
+    MainWindow::setLoading();
+
+    sensorListBox = new SensorList(ui->groupBox_2);
+    firstSensor   = new SensorBox(sensorListBox->sensors_group, {"add", 0, 0, 0, 0, 0});
+    QObject::connect(firstSensor, &firstSensor->save, this, onSaveSensor);
+    firstSensor->show();
 
     QTimer* infoTimer = new QTimer(this);
     QObject::connect(infoTimer, QTimer::timeout, this, MainWindow::onInfoTimeout);
@@ -38,6 +52,13 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 
     saveTimer = new QTimer(this);
     QObject::connect(saveTimer, QTimer::timeout, this, MainWindow::onSaveTimeout);
+
+    requestType = USB_REQUEST_LOAD_SETTINGS;
+    ui->updateBtn->click();
+    ui->updateBtn->click();
+
+    updateScrollBar();
+    QMetaObject::connectSlotsByName(this);
 }
 
 MainWindow::~MainWindow() { }
@@ -91,6 +112,10 @@ void MainWindow::on_upgradeBtn_clicked()
 
 void MainWindow::onInfoTimeout()
 {
+    if (needReconnectSlots) {
+        QMetaObject::connectSlotsByName(this);
+        needReconnectSlots = false;
+    }
     if (saveTimer->isActive()) {
         return;
     }
@@ -169,6 +194,31 @@ void MainWindow::enableAll()
     ui->updateTimeBtn->setDisabled(false);
 }
 
+void MainWindow::updateScrollBar()
+{
+    sensorListBox->verticalScrollBar->blockSignals(true);
+    sensorListBox->verticalScrollBar->setValue(0);
+    sensorListBox->verticalScrollBar->setMinimum(0);
+    sensorListBox->verticalScrollBar->setMaximum(
+        (sensors.size() + 1) * SENSOR_BOX_HEIGHT - sensorListBox->sensors_group->geometry().height()
+    );
+    sensorListBox->verticalScrollBar->blockSignals(false);
+
+    needReconnectSlots = true;
+}
+
+void MainWindow::clearSensors()
+{
+    if (sensors.size() == 0) {
+        return;
+    }
+    for (auto connection : m_sensorConnection) {
+        QObject::disconnect(connection);
+    }
+    m_sensorConnection.clear();
+    sensors.clear();
+}
+
 void MainWindow::showSettings()
 {
     std::time_t tick = (std::time_t)(TIMESTAMP2000_01_01_00_00_00 + static_cast<uint64_t>(DeviceInfo::time{}.get()));
@@ -197,6 +247,43 @@ void MainWindow::showSettings()
     ui->send_period->blockSignals(true);
     ui->send_period->setText(std::to_string(DeviceSettings::send_period{}.get()).c_str());
     ui->send_period->blockSignals(false);
+
+    clearSensors();
+    unsigned index = 0;
+    while (index < __arr_len(DeviceSettings::settings_t::modbus1_status)) {
+        index = DeviceSettings::getIndex(index);
+
+        if (index == __arr_len(DeviceSettings::settings_t::modbus1_status)) {
+            break;
+        }
+
+        sensors.push_back({
+            sensorListBox->sensors_group,
+            {
+                "save",
+                index + 1,
+                sensors.size() + 1,
+                DeviceSettings::modbus1_id_reg{}.get(index),
+                DeviceSettings::modbus1_value_reg{}.get(index),
+                0
+            }
+        });
+
+        index++;
+    }
+
+    for (auto& sensor : sensors) {
+        m_sensorConnection.push_back(
+            QObject::connect(&sensor, &sensor.save, this, onSaveSensor)
+        );
+    }
+
+    sensorListBox->sensors_group->show();
+    for (unsigned i = 0; i < sensors.size(); i++) {
+        sensors.at(i).show();
+    }
+
+    updateScrollBar();
 }
 
 void MainWindow::on_record_period_textChanged()
@@ -222,5 +309,50 @@ void MainWindow::resetLoading()
 {
     ui->statusbar->showMessage("Ready");
     enableAll();
+}
+
+
+void MainWindow::on_verticalScrollBar_valueChanged(int value)
+{
+    firstSensor->setY(firstSensor->getY() - value);
+    for (unsigned i = 0; i < sensors.size(); i++) {
+        SensorBox& tmp = sensors.at(i);
+        tmp.setY(tmp.getY() - value);
+    }
+}
+
+void MainWindow::onSaveSensor(const SensorData& sensorData)
+{
+    if (sensorData.lastID != sensorData.sensorID) {
+        // TODO: update ID
+        // TODO: emit update ID
+    }
+
+    DeviceSettings::modbus1_id_reg{}.set(sensorData.idReg, sensorData.lastID);
+    DeviceSettings::modbus1_id_reg::updated = true;
+
+    DeviceSettings::modbus1_value_reg{}.set(sensorData.valueReg, sensorData.lastID);
+    DeviceSettings::modbus1_value_reg::updated = true;
+
+    // TODO: emit update regs
+    ui->upgradeBtn->click();
+}
+
+void QWidget::wheelEvent(QWheelEvent *event)
+{
+    if (!MainWindow::sensorListBox->isCursorInside()) {
+        return;
+    }
+    if (MainWindow::sensors.empty()) {
+        return;
+    }
+    if (MainWindow::sensors.back().getY() < MainWindow::sensorListBox->sensors_group->height()) {
+        return;
+    }
+    if (event->angleDelta().y() > 0) {
+        MainWindow::sensorListBox->mouseWheelUp();
+    } else {
+        MainWindow::sensorListBox->mouseWheelDown();
+    }
 }
 

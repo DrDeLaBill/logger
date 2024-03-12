@@ -12,6 +12,15 @@
 #define MODBUS_SENS_COUNT  ((uint8_t)127)
 
 
+typedef enum _sensor_status_t {
+    SETTINGS_SENSOR_EMPTY    = (uint16_t)0x0000,
+    SETTINGS_SENSOR_THERMAL  = (uint16_t)0x0001,
+    SETTINGS_SENSOR_HUMIDITY = (uint16_t)0x0002,
+    SETTINGS_SENSOR_ANOTHER  = (uint16_t)0x4000,
+    SETTINGS_SENSOR_ERROR    = (uint16_t)0x8000,
+} sensor_status_t;
+
+
 struct DeviceSettings
 {
 public:
@@ -109,6 +118,8 @@ public:
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
+
+    static unsigned getIndex(const unsigned index = 0);
 };
 
 #endif // DEVICESETTINGS_H
