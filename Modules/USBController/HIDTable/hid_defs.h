@@ -29,6 +29,8 @@ extern "C" {
 
 #define HID_DELAY_MS           (25)
 
+#define HID_TABLE_BEDUG        (true)
+
 
 static const char REPORT_PREFIX[] = { 'L', 'O', 'G' };
 

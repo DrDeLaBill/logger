@@ -8,22 +8,30 @@
 #include <cstring>
 #include <unordered_map>
 
+#include "utils.h"
 #include "hid_defs.h"
 #include "HIDTable.h"
 #include "HIDTuple.h"
 #ifdef USE_HAL_DRIVER
-#include "bmacro.h"
+#	include "log.h"
+#	include "bmacro.h"
 #else
-#include "app_exception.h"
+#	include "app_exception.h"
 #endif
 
 
 template<class Table>
 struct HIDController
 {
-private:
+public:
     static_assert(std::is_base_of<HIDTableBase, Table>::value, "Template class must be HIDTable");
 
+    static constexpr unsigned count()
+    {
+        return Table::count();
+    }
+
+private:
     using tuple_p = typename Table::tuple_p;
     using tuple_v = typename Table::tuple_v;
 
@@ -34,12 +42,12 @@ private:
 
     uint16_t currID;
 
+#if defined(USE_HAL_DRIVER) && HID_TABLE_BEDUG
     void details(const uint16_t key, const uint8_t index)
     {
-#ifdef USE_HAL_DRIVER
-        gprint("Details: key = %u; index = %u; max key = %lu\n", key, index, maxKey());
-#endif
+        gprint("Details: key = %u; index = %u; max key = %u\n", key, index, count() - 1);
     }
+#endif
 
     template<class... TuplePacks>
     void set_table(utl::simple_list_t<TuplePacks...>)
@@ -70,8 +78,10 @@ public:
         auto it = characteristics.find(key);
         if (it == characteristics.end()) {
 #ifdef USE_HAL_DRIVER
+#	if HID_TABLE_BEDUG
         	BEDUG_ASSERT(false, "HID table not found error");
         	details(key, index);
+#	endif
         	return;
 #else
             throw new exceptions::TemplateErrorException();
@@ -90,8 +100,10 @@ public:
     	auto it = characteristics.find(key);
         if (it == characteristics.end()) {
 #ifdef USE_HAL_DRIVER
+#	if HID_TABLE_BEDUG
         	BEDUG_ASSERT(false, "HID table not found error");
         	details(key, index);
+#	endif
         	return;
 #else
             throw new exceptions::TemplateErrorException();
@@ -99,60 +111,72 @@ public:
         }
 
         auto lambda = [&] (auto& tuple) {
-            memcpy_s(dst, sizeof(uint32_t), tuple.serialize(index).get(), tuple.size());
+            memcpy(dst, tuple.serialize(index).get(), __min(sizeof(uint32_t), tuple.size()));
         };
 
         std::visit(lambda, it->second);
     }
 
-    bool isUpdated(const uint16_t key)
+#ifndef USE_HAL_DRIVER
+    bool isUpdated(const uint16_t key, const unsigned index = 0)
     {
         auto it = characteristics.find(key);
         if (it == characteristics.end()) {
-#ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "HID table not found error");
-            details(key, index);
-            return;
-#else
             throw new exceptions::TemplateErrorException();
-#endif
         }
 
         bool result = false;
         auto lambda = [&] (auto& tuple) {
-            result = tuple.isUpdated();
+            result = tuple.isUpdated(index);
         };
         std::visit(lambda, it->second);
 
         return result;
     }
 
-    void resetUpdated(const uint16_t key)
+    void resetUpdated(const uint16_t key, const unsigned index = 0)
     {
         auto it = characteristics.find(key);
         if (it == characteristics.end()) {
-#ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "HID table not found error");
-            details(key, index);
-            return;
-#else
             throw new exceptions::TemplateErrorException();
-#endif
         }
 
         auto lambda = [&] (auto& tuple) {
-            tuple.resetUpdated();
+            tuple.resetUpdated(index);
         };
         std::visit(lambda, it->second);
     }
+#else
+    unsigned getIndex(const uint16_t key, const uint8_t index = 0)
+    {
+    	auto it = characteristics.find(key);
+    	if (it == characteristics.end()) {
+#	if HID_TABLE_BEDUG
+        	BEDUG_ASSERT(false, "HID table not found error");
+        	details(key, index);
+#	endif
+        	return 0;
+    	}
+
+        unsigned result = 0;
+        auto lambda = [&] (auto& tuple) {
+        	result = tuple.index(index);
+        };
+        std::visit(lambda, it->second);
+
+        return result;
+    }
+#endif
 
     constexpr unsigned characteristicLength(uint16_t characteristic_id)
     {
         auto it = characteristics.find(characteristic_id);
         if (it == characteristics.end()) {
 #ifdef USE_HAL_DRIVER
+#	if HID_TABLE_BEDUG
             BEDUG_ASSERT(false, "HID table not found error");
         	details(characteristic_id, 0);
+#	endif
             return 0;
 #else
             throw new exceptions::TemplateErrorException();
@@ -167,11 +191,6 @@ public:
         std::visit(lambda, it->second);
 
         return result;
-    }
-
-    static constexpr unsigned count()
-    {
-        return Table::count();
     }
 
 };

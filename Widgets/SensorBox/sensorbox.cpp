@@ -240,3 +240,26 @@ void SensorBox::show()
 {
     sensor_box->show();
 }
+
+void SensorBox::clear()
+{
+    sensor_id_text_edit->setText(std::to_string(data.lastID).c_str());
+    sensor_id_reg_text_edit->setText("0");
+    sensor_value_reg_text_edit->setText("0");
+}
+
+void SensorBox::disable()
+{
+    sensor_id_text_edit->setDisabled(true);
+    sensor_id_reg_text_edit->setDisabled(true);
+    sensor_value_reg_text_edit->setDisabled(true);
+    sensor_add_btn->setDisabled(true);
+}
+
+void SensorBox::enable()
+{
+    sensor_id_text_edit->setDisabled(false);
+    sensor_id_reg_text_edit->setDisabled(false);
+    sensor_value_reg_text_edit->setDisabled(false);
+    sensor_add_btn->setDisabled(false);
+}

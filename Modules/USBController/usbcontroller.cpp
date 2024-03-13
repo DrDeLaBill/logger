@@ -40,6 +40,7 @@ USBController::~USBController()
 void USBController::loadSettings()
 {
     requestType = USB_REQUEST_LOAD_SETTINGS;
+    DeviceSettings::clear();
     emit request(requestType);
 }
 
@@ -67,15 +68,16 @@ void USBController::loadLog()
     emit request(requestType);
 }
 
-void USBController::handleResults(const USBCStatus status)
+void USBController::handleResults(const USBRequestType type, const USBCStatus status)
 {
     if (status != USBC_RES_OK && status != USBC_RES_DONE) {
-        MainWindow::setError(exceptions::USBExceptionGroup().message);
+        emit error(exceptions::USBExceptionGroup().message);
     }
 
-
-    emit responseReady(requestType, status);
-    requestType = USB_REQUEST_NONE;
+    if (requestType == type) {
+        requestType = USB_REQUEST_NONE;
+    }
+    emit responseReady(type, status);
 }
 
 void USBWorker::proccess(const USBRequestType type)
@@ -118,5 +120,5 @@ void USBWorker::proccess(const USBRequestType type)
         status = USBC_INTERNAL_ERROR;
     }
 
-    emit resultReady(status);
+    emit resultReady(type, status);
 }

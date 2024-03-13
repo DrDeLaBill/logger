@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #ifdef USE_HAL_DRIVER
+#	include "log.h"
 #   include "bmacro.h"
 #   include "variables.h"
 #else
@@ -22,9 +23,19 @@ struct HIDTupleBase {};
 template<class type_t, class callback_c = void, unsigned LENGTH = 1>
 struct HIDTuple : HIDTupleBase
 {
-    static_assert(!std::is_same<callback_c, void>::value, "Tuple getter functor must be non void");
-    static_assert(LENGTH > 0, "Length must not be 0");
+    static_assert(!std::is_same<callback_c, void>::value, "The tuple getter functor must be non void");
+    static_assert(LENGTH > 0, "The length must not be 0");
 
+
+#ifndef USE_HAL_DRIVER
+    HIDTuple()
+    {
+        if (callback_c::updated) {
+            throw new exceptions::TemplateErrorException();
+        }
+        callback_c::updated = new bool[LENGTH];
+    }
+#endif
 
     constexpr unsigned size() const // TODO: find references
     {
@@ -36,18 +47,20 @@ struct HIDTuple : HIDTupleBase
         return LENGTH;
     }
 
-    void details(unsigned index = 0)
+#if defined(USE_HAL_DRIVER) && HID_TABLE_BEDUG
+    void details(const unsigned index = 0)
     {
-#ifdef USE_HAL_DRIVER
-        gprint("Details: target pointer = %u; index = %u; size = %d; length = %u\n", reinterpret_cast<unsigned>(target()), index, sizeof(type_t), length());
-#endif
+        gprint("Details: index = %u; size = %d; length = %u\n", index, sizeof(type_t), length());
     }
+#endif
 
     type_t deserialize(const uint8_t* src)
     {
         if (!src) {
 #ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "Source must not be null");
+#	if HID_TABLE_BEDUG
+            BEDUG_ASSERT(false, "The source must not be null");
+#	endif
         	return 0;
 #else
             throw new exceptions::TemplateErrorException();
@@ -56,13 +69,15 @@ struct HIDTuple : HIDTupleBase
         return utl::deserialize<type_t>(src)[0];
     }
 
-    std::shared_ptr<uint8_t[]> serialize(unsigned index = 0)
+    std::shared_ptr<uint8_t[]> serialize(const unsigned index = 0)
     {
         type_t value = static_cast<type_t>(callback_c{}.get(index));
         if (index >= length()) {
 #ifdef USE_HAL_DRIVER
-            BEDUG_ASSERT(false, "Target must not be null");
+#	if HID_TABLE_BEDUG
+            BEDUG_ASSERT(false, "The target must not be null");
             details(index);
+#	endif
         	return nullptr;
 #else
             throw new exceptions::TemplateErrorException();
@@ -71,20 +86,44 @@ struct HIDTuple : HIDTupleBase
         return utl::serialize<type_t>(&value);
     }
 
-    void set(type_t value, unsigned index = 0)
+    void set(type_t value, const unsigned index = 0)
     {
         callback_c{}.set(value, index);
     }
 
-    bool isUpdated()
+#ifndef USE_HAL_DRIVER
+
+    bool isUpdated(const unsigned index = 0)
     {
-        return callback_c::updated;
+        if (!callback_c::updated) {
+            throw new exceptions::TemplateErrorException();
+        }
+        return callback_c::updated[index];
     }
 
-    void resetUpdated()
+    void resetUpdated(const unsigned index = 0)
     {
-        callback_c::updated = false;
+        if (!callback_c::updated) {
+            throw new exceptions::TemplateErrorException();
+        }
+        callback_c::updated[index] = false;
     }
+
+#else
+
+    unsigned index(const unsigned index = 0)
+    {
+        if (index > LENGTH - 1) {
+#	if HID_TABLE_BEDUG
+            BEDUG_ASSERT(false, "Target index is out of range");
+        	details(index);
+#	endif
+            return 0;
+        }
+    	return callback_c{}.index(index);
+    }
+
+#endif
 };
 
 

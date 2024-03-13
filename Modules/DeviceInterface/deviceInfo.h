@@ -18,7 +18,7 @@ protected:
 public:
     struct time
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };

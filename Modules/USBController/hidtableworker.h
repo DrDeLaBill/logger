@@ -58,7 +58,6 @@ private:
     struct start_init_a              { void operator()(void) const; };
     struct start_idle_a              { void operator()(void) const; };
     struct count_error_a             { void operator()(void) const; };
-    struct reset_usb_a               { void operator()(void) const; };
 
     using fsm_table = fsm::TransitionTable<
         fsm::Transition<init_s,    success_e, update_s,  init_characteristics_a,    fsm::Guard::NO_GUARD>,
@@ -68,11 +67,11 @@ private:
         fsm::Transition<update_s,  success_e, update_s,  iterate_characteristics_a, fsm::Guard::NO_GUARD>,
         fsm::Transition<update_s,  timeout_e, update_s,  count_error_a,             fsm::Guard::NO_GUARD>,
         fsm::Transition<update_s,  end_e,     idle_s,    start_idle_a,              fsm::Guard::NO_GUARD>,
-        fsm::Transition<update_s,  error_e,   init_s,    reset_usb_a,               fsm::Guard::NO_GUARD>,
+        fsm::Transition<update_s,  error_e,   idle_s,    init_characteristics_a,    fsm::Guard::NO_GUARD>,
         fsm::Transition<upgrade_s, success_e, upgrade_s, iterate_characteristics_a, fsm::Guard::NO_GUARD>,
         fsm::Transition<upgrade_s, timeout_e, upgrade_s, count_error_a,             fsm::Guard::NO_GUARD>,
         fsm::Transition<upgrade_s, end_e,     idle_s,    start_idle_a,              fsm::Guard::NO_GUARD>,
-        fsm::Transition<upgrade_s, error_e,   init_s,    reset_usb_a,               fsm::Guard::NO_GUARD>
+        fsm::Transition<upgrade_s, error_e,   idle_s,    init_characteristics_a,    fsm::Guard::NO_GUARD>
     >;
 
     USBCStatus usbSessionProccess() const
@@ -82,10 +81,6 @@ private:
         HIDService::init();
 
         do {
-            if (errors_count > ERRORS_COUNT_MAX) {
-                result = USBC_RES_ERROR;
-                fsm.push_event(error_e{});
-            }
             fsm.proccess();
         } while (!fsm.is_state(idle_s{}));
 
@@ -147,15 +142,18 @@ void HIDTableWorker<Table, START_ID>::_init_s::operator()(void) const
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::_idle_s::operator()(void) const
-{
-
-}
+void HIDTableWorker<Table, START_ID>::_idle_s::operator()(void) const {}
 
 template<class Table, uint16_t START_ID>
 void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
 {
     result = USBC_RES_OK;
+
+    if (errors_count > ERRORS_COUNT_MAX) {
+        fsm.push_event(error_e{});
+        result = USBC_RES_ERROR;
+        return;
+    }
 
     if (!timer.wait()) {
         fsm.push_event(timeout_e{});
@@ -195,6 +193,12 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
 {
     result = USBC_RES_OK;
 
+    if (errors_count > ERRORS_COUNT_MAX) {
+        fsm.push_event(error_e{});
+        result = USBC_RES_ERROR;
+        return;
+    }
+
     if (!timer.wait()) {
         fsm.push_event(timeout_e{});
         result = USBC_RES_ERROR;
@@ -207,7 +211,7 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
         return;
     }
 
-    if (!hid_table.isUpdated(characteristic_id)) {
+    if (!hid_table.isUpdated(characteristic_id, index)) {
         fsm.push_event(success_e{});
         return;
     }
@@ -230,7 +234,7 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
     report_pack_t& response = USBDReport::getReport();
     hid_table.setValue(response.characteristic_id, response.data, response.index);
     index = response.index;
-    hid_table.resetUpdated(characteristic_id);
+    hid_table.resetUpdated(characteristic_id, index);
 
     fsm.push_event(success_e{});
 }
@@ -249,6 +253,7 @@ template<class Table, uint16_t START_ID>
 void HIDTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void) const
 {
     index++;
+
     if (index >= hid_table.characteristicLength(characteristic_id)) {
         characteristic_id++;
         index = 0;
@@ -276,13 +281,6 @@ void HIDTableWorker<Table, START_ID>::count_error_a::operator()(void) const
     fsm.clear_events();
     errors_count++;
     timer.start();
-}
-
-template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::reset_usb_a::operator()(void) const
-{
-    // TODO: reset usb
-    throw exceptions::UsbException();
 }
 
 #endif // HIDTableWorker_H

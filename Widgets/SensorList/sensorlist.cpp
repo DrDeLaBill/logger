@@ -26,6 +26,12 @@ SensorList::SensorList(QWidget* parent)
     this->retranslateUi();
 }
 
+SensorList::~SensorList()
+{
+    verticalScrollBar->deleteLater();
+    sensors_group->deleteLater();
+}
+
 bool SensorList::isCursorInside()
 {
     const QPoint& point = sensors_group->mapFromGlobal(QCursor::pos());

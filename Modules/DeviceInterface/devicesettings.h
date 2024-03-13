@@ -4,6 +4,8 @@
 
 #include <cstdint>
 
+#include "utils.h"
+
 
 #define DV_TYPE            ((uint16_t)0x0001)
 #define SW_VERSION         ((uint8_t)0x04)
@@ -60,66 +62,68 @@ public:
 
     struct dv_type
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct sw_id
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct fw_id
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct cf_id
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct record_period
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct send_period
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct record_id
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct modbus1_status
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct modbus1_value_reg
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct modbus1_id_reg
     {
-        static bool updated;
+        static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
 
     static unsigned getIndex(const unsigned index = 0);
+
+    static void clear();
 };
 
 #endif // DEVICESETTINGS_H

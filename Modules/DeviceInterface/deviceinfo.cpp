@@ -4,7 +4,7 @@
 DeviceInfo::info_t DeviceInfo::info;
 
 
-bool DeviceInfo::time::updated = false;
+bool* DeviceInfo::time::updated;
 void DeviceInfo::time::set(uint32_t value, unsigned)
 {
     info.time = value;

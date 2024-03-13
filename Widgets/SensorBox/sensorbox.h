@@ -64,6 +64,9 @@ public:
     void setY(int y);
 
     void show();
+    void clear();
+    void disable();
+    void enable();
 
 };
 

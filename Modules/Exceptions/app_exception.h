@@ -69,6 +69,16 @@ namespace exceptions
         TemplateErrorException(): ExceptionBase("TEMPLATE_ERROR", InternallExceptionGroup()) {}
     };
 
+    struct SettingsException: public ExceptionBase
+    {
+        SettingsException(): ExceptionBase("SETTINGS_ERROR", InternallExceptionGroup()) {}
+    };
+
+    struct SettingsSaveException: public ExceptionBase
+    {
+        SettingsSaveException(): ExceptionBase("SETTINGS_SAVE_ERROR", InternallExceptionGroup()) {}
+    };
+
     struct UsbException: public ExceptionBase
     {
         UsbException(): ExceptionBase("USB_ERROR", USBExceptionGroup()) {}

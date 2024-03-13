@@ -19,6 +19,7 @@ SensorData& SensorData::operator=(const SensorData& other)
 {
     buttonLabel = other.buttonLabel;
     sensorID = other.sensorID;
+    lastID = other.lastID;
     number = other.number;
     idReg = other.idReg;
     valueReg = other.valueReg;

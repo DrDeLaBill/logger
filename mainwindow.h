@@ -33,6 +33,7 @@ public:
     ~MainWindow();
 \
     static void setError(const QString& str);
+    static void setWarning(const QString& str);
 
     static void update();
     static void upgrade();
@@ -41,9 +42,9 @@ private:
     static std::vector<QMetaObject::Connection> m_sensorConnection;
 
     static QTimer* saveTimer;
-    static bool needReconnectSlots;
+    static QTimer* infoTimer;
 
-    void showSettings();
+    void showSettings(const USBRequestType type);
     void clearSettings();
     void clearSensors();
     void updateScrollBar();
@@ -71,6 +72,8 @@ private slots:
     void onSaveTimeout();
 
     void onSaveSensor(const SensorData& sensorData);
+
+    void onUSBError(const QString& message);
 
 public:
     static SensorList* sensorListBox;

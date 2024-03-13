@@ -17,6 +17,7 @@ public:
     QScrollBar* verticalScrollBar;
 
     SensorList(QWidget* parent);
+    ~SensorList();
 
     bool isCursorInside();
 

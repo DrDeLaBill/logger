@@ -43,7 +43,7 @@ public slots:
     void proccess(const USBRequestType type);
 
 signals:
-    void resultReady(const USBCStatus status);
+    void resultReady(const USBRequestType type, const USBCStatus status);
 
 private:
     static constexpr char TAG[] = "USBW";
@@ -97,11 +97,12 @@ public:
 
 
 public slots:
-    void handleResults(const USBCStatus status);
+    void handleResults(const USBRequestType type, const USBCStatus status);
 
 signals:
     void request(const USBRequestType type);
     void responseReady(const USBRequestType type, const USBCStatus status);
+    void error(const QString& message);
 
 };
 
