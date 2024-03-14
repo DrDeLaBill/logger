@@ -71,3 +71,5 @@ INCLUDEPATH += $$PWD/Widgets/SensorList
 INCLUDEPATH += $$PWD/Widgets/SensorBox
 
 LIBS        += $$files($$PWD/Modules/libusb/lib/*.a, true)
+
+QMAKE_CXXFLAGS += -Og

@@ -10,6 +10,11 @@ class DeviceInfo
 public:
     typedef struct _info_t {
         uint32_t time;
+        uint32_t min_id;
+        uint32_t max_id;
+        uint32_t current_id;
+        uint32_t current_count;
+        uint8_t  record_loaded;
     } info_t;
 
 protected:
@@ -21,6 +26,36 @@ public:
         static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
+    };
+    struct min_id
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct max_id
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct current_id
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct current_count
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct record_loaded
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
 };
 

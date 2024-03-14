@@ -75,6 +75,8 @@ private slots:
 
     void onUSBError(const QString& message);
 
+    void on_dumpBtn_clicked();
+
 public:
     static SensorList* sensorListBox;
     static SensorBox* firstSensor;

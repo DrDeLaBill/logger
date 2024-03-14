@@ -19,9 +19,9 @@
 #include "HIDController.h"
 #include "hidtableworker.h"
 
+#include "devicesettings.h"
 #include "deviceinfo.h"
 #include "devicerecord.h"
-#include "devicesettings.h"
 
 
 enum USBRequestType
@@ -61,14 +61,30 @@ private:
         HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
     >;
     using settings_worker_t = HIDTableWorker<table_settings_t, HID_FIRST_KEY>;
-    static settings_worker_t handlerSettings;
 
     using table_info_t = HIDTable<
-        HIDTuple<uint32_t, DeviceInfo::time>
+        HIDTuple<uint32_t, DeviceInfo::time>,
+        HIDTuple<uint32_t, DeviceInfo::min_id>,
+        HIDTuple<uint32_t, DeviceInfo::max_id>,
+        HIDTuple<uint32_t, DeviceInfo::current_id>,
+        HIDTuple<uint32_t, DeviceInfo::current_count>,
+        HIDTuple<uint8_t,  DeviceInfo::record_loaded>
     >;
     using info_worker_t = HIDTableWorker<table_info_t, settings_worker_t::maxID() + 1>;
+
+    using table_record_t = HIDTable<
+        HIDTuple<uint32_t, DeviceRecord::id>,
+        HIDTuple<uint32_t, DeviceRecord::time>,
+        HIDTuple<uint8_t,  DeviceRecord::ID,    __arr_len(DeviceRecord::record_t::ID)>,
+        HIDTuple<uint16_t, DeviceRecord::value, __arr_len(DeviceRecord::record_t::value)>
+    >;
+    using record_worker_t = HIDTableWorker<table_record_t, info_worker_t::maxID() + 1>;
+
+    static settings_worker_t handlerSettings;
     static info_worker_t handlerInfo;
-    //    TableLog handlerLog;
+    static record_worker_t handlerRecord;
+
+    USBCStatus loadLogProccess();
 
 };
 

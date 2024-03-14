@@ -67,6 +67,7 @@ public:
     void clear();
     void disable();
     void enable();
+    unsigned height();
 
 };
 

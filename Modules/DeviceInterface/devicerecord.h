@@ -4,31 +4,47 @@
 
 #include <cstdint>
 
-#include "devicesettings.h"
+#include "devicedefs.h"
 
 
 struct DeviceRecord
 {
 public:
-    struct record_t {
-        // Record ID
+    typedef struct _reocrd_t {
         uint32_t id;
-        // Record time
         uint32_t time;
-        // Record registers values
-        uint8_t  IDs[MODBUS_SENS_COUNT];
-        uint16_t values[MODBUS_SENS_COUNT];
-    };
+        uint8_t  ID[MODBUS_SENS_COUNT];
+        uint16_t value[MODBUS_SENS_COUNT];
+    } record_t;
 
 protected:
     static record_t record;
 
 public:
-
-    struct id     { uint32_t* operator()() { return &record.id; } };
-    struct time   { uint32_t* operator()() { return &record.time; } };
-    struct IDs    { uint8_t*  operator()() { return record.IDs; } };
-    struct values { uint16_t* operator()() { return record.values; } };
+    struct id
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct time
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct ID
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
+    struct value
+    {
+        static bool* updated;
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
+    };
 };
 
 

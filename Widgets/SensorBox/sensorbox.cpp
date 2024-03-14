@@ -263,3 +263,8 @@ void SensorBox::enable()
     sensor_value_reg_text_edit->setDisabled(false);
     sensor_add_btn->setDisabled(false);
 }
+
+unsigned SensorBox::height()
+{
+    return sensor_box->height();
+}

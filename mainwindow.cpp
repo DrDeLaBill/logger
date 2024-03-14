@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <QWheelEvent>
 
-#include "log.h"
+#include "log.h" // TODO: remove
 #include "hal_defs.h"
 
 #include "usbcontroller.h"
@@ -141,6 +141,17 @@ void MainWindow::on_upgradeBtn_clicked()
     }
 }
 
+void MainWindow::on_dumpBtn_clicked()
+{
+    MainWindow::setLoading();
+    usbcontroller.loadLog();
+    requestType = USB_REQUEST_LOAD_LOG;
+
+    if (infoTimer) {
+        infoTimer->stop();
+    }
+}
+
 void MainWindow::onInfoTimeout()
 {
     if (saveTimer->isActive()) {
@@ -223,7 +234,9 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
         ui->updateBtn->setDisabled(false);
         ui->updateBtn->click();
         break;
-    case USB_REQUEST_LOAD_LOG: // TODO
+    case USB_REQUEST_LOAD_LOG:
+//        loadLogProccess(); TODO
+//        break;
     default:
 #if defined(QT_NO_DEBUG)
         MainWindow::setError(exceptions::InternallExceptionGroup().message);
@@ -244,6 +257,7 @@ void MainWindow::disableAll()
     ui->record_period->setDisabled(true);
     ui->send_period->setDisabled(true);
 
+    ui->dumpBtn->setDisabled(true);
     ui->updateBtn->setDisabled(true);
     ui->upgradeBtn->setDisabled(true);
     ui->updateTimeBtn->setDisabled(true);
@@ -262,6 +276,7 @@ void MainWindow::enableAll()
     ui->record_period->setDisabled(false);
     ui->send_period->setDisabled(false);
 
+    ui->dumpBtn->setDisabled(false);
     ui->updateBtn->setDisabled(false);
     ui->upgradeBtn->setDisabled(false);
     ui->updateTimeBtn->setDisabled(false);
@@ -465,7 +480,7 @@ void QWidget::wheelEvent(QWheelEvent *event)
     if (MainWindow::sensors.empty()) {
         return;
     }
-    if (MainWindow::sensors.back().getY() < MainWindow::sensorListBox->sensors_group->height()) {
+    if (MainWindow::sensors.back().getY() + MainWindow::sensors.back().height() < MainWindow::sensorListBox->sensors_group->height()) {
         return;
     }
     if (event->angleDelta().y() > 0) {
