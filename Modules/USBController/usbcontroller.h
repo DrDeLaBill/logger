@@ -44,6 +44,7 @@ public slots:
 
 signals:
     void resultReady(const USBRequestType type, const USBCStatus status);
+    void loadLogProgressUpdated(uint32_t value); // TODO: USBWorker -> MainWindow
 
 private:
     static constexpr char TAG[] = "USBW";
@@ -61,6 +62,7 @@ private:
         HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
     >;
     using settings_worker_t = HIDTableWorker<table_settings_t, HID_FIRST_KEY>;
+    static constexpr unsigned SETTINGS_MAX_ID = settings_worker_t::maxID();
 
     using table_info_t = HIDTable<
         HIDTuple<uint32_t, DeviceInfo::time>,
@@ -70,7 +72,8 @@ private:
         HIDTuple<uint32_t, DeviceInfo::current_count>,
         HIDTuple<uint8_t,  DeviceInfo::record_loaded>
     >;
-    using info_worker_t = HIDTableWorker<table_info_t, settings_worker_t::maxID() + 1>;
+    using info_worker_t = HIDTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
+    static constexpr unsigned INFO_MAX_ID = info_worker_t::maxID();
 
     using table_record_t = HIDTable<
         HIDTuple<uint32_t, DeviceRecord::id>,
@@ -78,7 +81,7 @@ private:
         HIDTuple<uint8_t,  DeviceRecord::ID,    __arr_len(DeviceRecord::record_t::ID)>,
         HIDTuple<uint16_t, DeviceRecord::value, __arr_len(DeviceRecord::record_t::value)>
     >;
-    using record_worker_t = HIDTableWorker<table_record_t, info_worker_t::maxID() + 1>;
+    using record_worker_t = HIDTableWorker<table_record_t, INFO_MAX_ID + 1>;
 
     static settings_worker_t handlerSettings;
     static info_worker_t handlerInfo;
@@ -114,11 +117,13 @@ public:
 
 public slots:
     void handleResults(const USBRequestType type, const USBCStatus status);
+    void onLoadLogProgressUpdated(uint32_t value); // TODO: USBWorker -> MainWindow
 
 signals:
     void request(const USBRequestType type);
     void responseReady(const USBRequestType type, const USBCStatus status);
     void error(const QString& message);
+    void loadLogProgressUpdated(uint32_t value); // TODO: USBWorker -> MainWindow
 
 };
 

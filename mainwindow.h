@@ -77,6 +77,8 @@ private slots:
 
     void on_dumpBtn_clicked();
 
+    void onLoadLogProgressUpdated(uint32_t value);
+
 public:
     static SensorList* sensorListBox;
     static SensorBox* firstSensor;

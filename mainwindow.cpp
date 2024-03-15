@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 
     QObject::connect(&usbcontroller, &usbcontroller.responseReady, this, responseProccess);
     QObject::connect(&usbcontroller, &usbcontroller.error, this, onUSBError);
+    QObject::connect(&usbcontroller, &usbcontroller.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
 
     sensorListBox = new SensorList(ui->groupBox_2);
     firstSensor   = new SensorBox(sensorListBox->sensors_group, {"add", 0, 0, 0, 0, 0});
@@ -57,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
         this,
         on_verticalScrollBar_valueChanged
     );
+
 
     ui->updateBtn->click();
 }
@@ -152,6 +154,12 @@ void MainWindow::on_dumpBtn_clicked()
     }
 }
 
+void MainWindow::onLoadLogProgressUpdated(uint32_t value)
+{
+    unsigned percent = 100 * value / (DeviceInfo::max_id::get() - DeviceInfo::min_id::get());
+    ui->progressBar->setValue(percent);
+}
+
 void MainWindow::onInfoTimeout()
 {
     if (saveTimer->isActive()) {
@@ -235,8 +243,7 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
         ui->updateBtn->click();
         break;
     case USB_REQUEST_LOAD_LOG:
-//        loadLogProccess(); TODO
-//        break;
+        break;
     default:
 #if defined(QT_NO_DEBUG)
         MainWindow::setError(exceptions::InternallExceptionGroup().message);

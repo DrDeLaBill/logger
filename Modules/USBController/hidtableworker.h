@@ -42,12 +42,10 @@ protected:
 
 private:
     // States:
-    struct _init_s    { void operator()(void) const; };
     struct _idle_s    { void operator()(void) const; };
     struct _update_s  { void operator()(void) const; };
     struct _upgrade_s { void operator()(void) const; };
 
-    FSM_CREATE_STATE(init_s,    _init_s);
     FSM_CREATE_STATE(idle_s,    _idle_s);
     FSM_CREATE_STATE(update_s,  _update_s);
     FSM_CREATE_STATE(upgrade_s, _upgrade_s);
@@ -55,15 +53,12 @@ private:
     // Actions:
     struct init_characteristics_a    { void operator()(void) const; };
     struct iterate_characteristics_a { void operator()(void) const; };
-    struct start_init_a              { void operator()(void) const; };
     struct start_idle_a              { void operator()(void) const; };
     struct count_error_a             { void operator()(void) const; };
 
     using fsm_table = fsm::TransitionTable<
-        fsm::Transition<init_s,    success_e, update_s,  init_characteristics_a,    fsm::Guard::NO_GUARD>,
         fsm::Transition<idle_s,    update_e,  update_s,  init_characteristics_a,    fsm::Guard::NO_GUARD>,
         fsm::Transition<idle_s,    upgrade_e, upgrade_s, init_characteristics_a,    fsm::Guard::NO_GUARD>,
-        fsm::Transition<idle_s,    success_e, init_s,    start_init_a,              fsm::Guard::NO_GUARD>,
         fsm::Transition<update_s,  success_e, update_s,  iterate_characteristics_a, fsm::Guard::NO_GUARD>,
         fsm::Transition<update_s,  timeout_e, update_s,  count_error_a,             fsm::Guard::NO_GUARD>,
         fsm::Transition<update_s,  end_e,     idle_s,    start_idle_a,              fsm::Guard::NO_GUARD>,
@@ -133,13 +128,6 @@ uint8_t HIDTableWorker<Table, START_ID>::index = 0;
 
 template<class Table, uint16_t START_ID>
 utl::Timer HIDTableWorker<Table, START_ID>::timer(HID_DELAY_MS);
-
-template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::_init_s::operator()(void) const
-{
-    fsm.push_event(success_e{});
-    result = USBC_RES_OK;
-}
 
 template<class Table, uint16_t START_ID>
 void HIDTableWorker<Table, START_ID>::_idle_s::operator()(void) const {}
@@ -261,12 +249,6 @@ void HIDTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void
     }
 
     timer.start();
-}
-
-template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::start_init_a::operator()(void) const
-{
-    fsm.clear_events();
 }
 
 template<class Table, uint16_t START_ID>

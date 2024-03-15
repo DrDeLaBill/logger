@@ -1,5 +1,6 @@
 #include "usbcontroller.h"
 
+#include <fstream>
 #include <iostream>
 
 #include <cstdio>
@@ -32,6 +33,8 @@ USBController::USBController(): worker()
     QObject::connect(&worker, &USBWorker::resultReady, this, &USBController::handleResults);
     // Write characteristics
     // TODO ---...---
+
+    QObject::connect(&worker, &worker.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
 
     workerThread.start();
 }
@@ -85,6 +88,11 @@ void USBController::handleResults(const USBRequestType type, const USBCStatus st
     emit responseReady(type, status);
 }
 
+void USBController::onLoadLogProgressUpdated(uint32_t value)
+{
+    emit loadLogProgressUpdated(value);
+}
+
 void USBWorker::proccess(const USBRequestType type)
 {
     USBCStatus status = USBC_RES_OK;
@@ -131,40 +139,65 @@ void USBWorker::proccess(const USBRequestType type)
 USBCStatus USBWorker::loadLogProccess()
 {
     uint32_t curLogId = DeviceInfo::min_id::get();
+    USBCStatus status = USBC_RES_OK;
+
+    DeviceInfo::record_loaded::set(0);
+    DeviceInfo::record_loaded::updated[0] = true;
+    if (handlerInfo.save() != USBC_RES_DONE) {
+        while (handlerInfo.load() != USBC_RES_DONE);
+    }
+    DeviceInfo::current_id::set(curLogId);
+    DeviceInfo::current_id::updated[0] = true;
+    if (handlerInfo.save() != USBC_RES_DONE) {
+        while (handlerInfo.load() != USBC_RES_DONE);
+    }
+
+    std::ofstream dump;
+    dump.open("C:\\Users\\georg\\Documents\\dump.csv");
+    dump << "LOG ID,TIME,ID,VALUE,\n";
     while (curLogId <= DeviceInfo::max_id::get()) {
-        USBCStatus status = handlerInfo.load();
+        status = handlerInfo.load();
         if (status != USBC_RES_DONE) {
-            throw exceptions::UsbReportException();
+            continue;
         }
 
         if (DeviceInfo::record_loaded::get() == 0) {
             continue;
         }
-        curLogId = DeviceInfo::current_id::get();
+        uint32_t tmpId = DeviceInfo::current_id::get();
+        if (curLogId < tmpId) {
+            curLogId = tmpId;
+        }
 
         status = handlerRecord.load();
         if (status != USBC_RES_DONE) {
             throw exceptions::UsbReportException();
         }
 
-        printPretty("##########RECORD##########\n");
-        printPretty("Record ID: %lu\n", DeviceRecord::id::get());
-        printPretty("Record time: %lu\n", DeviceRecord::time::get());
-        printPretty("INDEX\tID\tVALUE\n");
         for (uint8_t i = 0; i < DeviceInfo::current_count::get(); i++) {
-            printPretty("%03u\t%03u\t%u\n", i, DeviceRecord::ID::get(i), DeviceRecord::value::get(i));
+            if (i == 0) {
+                dump << DeviceRecord::id::get() << "," << DeviceRecord::time::get() << ",";
+            } else {
+                dump << ",,";
+            }
+            dump << DeviceRecord::ID::get(i) << "," << DeviceRecord::value::get(i) << ",\n";
         }
-        if (!DeviceInfo::current_count::get()) {
-            printPretty("----------EMPTY-----------\n");
-        }
-        printPretty("##########RECORD##########\n");
+        emit loadLogProgressUpdated(curLogId);
 
-        DeviceInfo::current_id::set(curLogId);
-        status = handlerInfo.save();
-        if (status != USBC_RES_DONE) {
-            throw exceptions::UsbReportException();
+        DeviceInfo::record_loaded::set(0);
+        DeviceInfo::record_loaded::updated[0] = true;
+        if (handlerInfo.save() != USBC_RES_DONE) {
+            while (handlerInfo.load() != USBC_RES_DONE);
         }
+        DeviceInfo::current_id::set(curLogId);
+        DeviceInfo::current_id::updated[0] = true;
+        if (handlerInfo.save() != USBC_RES_DONE) {
+            while (handlerInfo.load() != USBC_RES_DONE);
+        }
+        curLogId++;
     }
+
+    dump.close();
 
     return USBC_RES_DONE;
 }
