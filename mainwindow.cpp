@@ -156,7 +156,23 @@ void MainWindow::on_dumpBtn_clicked()
 
 void MainWindow::onLoadLogProgressUpdated(uint32_t value)
 {
+    static unsigned long long speedStart = 0;
+    static uint32_t startId = 0;
+    if (DeviceInfo::max_id::get() - DeviceInfo::min_id::get() == 0) {
+        return;
+    }
     unsigned percent = 100 * value / (DeviceInfo::max_id::get() - DeviceInfo::min_id::get());
+    if (ui->progressBar->text().toStdString() == "0%") {
+        speedStart = getMillis();
+        startId = DeviceInfo::current_id::get();
+    }
+    unsigned long long factor = (unsigned long long)(value - startId) * 60000;
+    unsigned long long time = (getMillis() - speedStart) + 1;
+    if (ui->progressBar->text().toStdString() == "100%") {
+        ui->speed->setText((std::to_string(factor / time) + " records/min " + std::to_string(time / 1000) + " sec").c_str());
+    } else {
+        ui->speed->setText((std::to_string(factor / time) + " records/min").c_str());
+    }
     ui->progressBar->setValue(percent);
 }
 

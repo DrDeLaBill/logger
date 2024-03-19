@@ -1,9 +1,8 @@
 #include "hidservice.h"
 
+#include <memory>
 #include <cstdio>
 #include <cstdint>
-#include <memory>
-#include <iostream>
 
 #include <libusb.h>
 
@@ -18,16 +17,26 @@
 
 libusb_device_handle* HIDService::handle = NULL;
 libusb_device** HIDService:: devs = NULL;
+struct libusb_device_descriptor HIDService::dev_desc;
 
-void HIDService::init()
+void HIDService::init(uint16_t vendorId, uint16_t productId)
 {
     if (libusb_init(NULL) != 0) {
         throw exceptions::UsbInitException();
+    }
+
+    try {
+        initSession(&dev_desc, vendorId, productId);
+    } catch (...) {
+        closeSession();
+        throw;
     }
 }
 
 void HIDService::deinit()
 {
+    closeSession();
+
     libusb_exit(NULL);
 }
 
@@ -36,17 +45,8 @@ bool HIDService::isDeviceConnected(uint16_t vendorId, uint16_t productId)
     return checkDevice(vendorId, productId);
 }
 
-void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_pack_t& request)
+void HIDService::sendReport(const report_pack_t& request)
 {
-    struct libusb_device_descriptor dev_desc;
-
-    try {
-        initSession(&dev_desc, vendorId, productId);
-    } catch (...) {
-        closeSession();
-        throw;
-    }
-
     USBHReport::createReport(request);
 
     int resLength = 0;
@@ -90,34 +90,13 @@ void HIDService::sendReport(uint16_t vendorId, uint16_t productId, const report_
         if (resLength == 0) {
             throw exceptions::UsbReportException();
         }
-
     } catch (...) {
-        closeSession();
         throw;
     }
-
-    closeSession();
-
-#if !defined(QT_NO_DEBUG) && HID_SERVICE_BEDUG
-    printTagLog(TAG, "HOST REPORT:");
-    hid_report_show(&USBHReport::getReport());
-    printTagLog(TAG, "DEVICE REPORT:");
-    hid_report_show(&USBDReport::getReport());
-    printPretty("deserializated: %u\n", utl::deserialize<uint32_t>(USBDReport::getReport().data)[0]);
-#endif
 }
 
-void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
+void HIDService::loadReport()
 {
-    struct libusb_device_descriptor dev_desc;
-
-    try {
-        initSession(&dev_desc, vendorId, productId);
-    } catch (...) {
-        closeSession();
-        throw;
-    }
-
     int resLength = 0;
     report_pack_t report = {};
     try {
@@ -144,16 +123,8 @@ void HIDService::loadReport(uint16_t vendorId, uint16_t productId)
             throw exceptions::UsbReportException();
         }
     } catch (...) {
-        closeSession();
         throw;
     }
-
-    closeSession();
-
-#if !defined(QT_NO_DEBUG) && HID_SERVICE_BEDUG
-    printTagLog(TAG, "DEVICE REPORT:");
-    hid_report_show(&USBDReport::getReport());
-#endif
 }
 
 void HIDService::initSession(

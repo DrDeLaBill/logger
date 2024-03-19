@@ -21,26 +21,30 @@ protected:
     static record_t record;
 
 public:
-    struct id
+    struct rcrd_id
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct time
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
-    struct ID
+    struct snsr_id
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct value
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);

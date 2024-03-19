@@ -21,19 +21,20 @@ private:
     std::unique_ptr<uint8_t> report;
 
 public:
-    static void init();
+    static void init(uint16_t vendorId, uint16_t productId);
     static void deinit();
 
     static bool isDeviceConnected(uint16_t vendorId, uint16_t productId);
 
-    static void loadReport(uint16_t vendorId, uint16_t productId);
-    static void sendReport(uint16_t vendorId, uint16_t productId, const report_pack_t& report);
+    static void loadReport();
+    static void sendReport(const report_pack_t& report);
     static unsigned getReportSize(uint16_t vendorId, uint16_t productId);
     static std::unique_ptr<uint8_t> getReport(uint16_t vendorId, uint16_t productId);
 
 private:
     static libusb_device_handle* handle;
     static libusb_device** devs;
+    static struct libusb_device_descriptor dev_desc;
 
     static bool checkDevice(uint16_t vendorId, uint16_t productId);
     static libusb_device* findDevice(libusb_device **devs, uint16_t vendorId, uint16_t productId);

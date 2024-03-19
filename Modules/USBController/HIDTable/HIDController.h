@@ -61,7 +61,17 @@ private:
     {
         using tuple_t = typename decltype(tuplePack)::TYPE;
 
-        characteristics.insert({currID++, tuple_t{}});
+        characteristics.insert({currID, tuple_t{}});
+
+#ifndef USE_HAL_DRIVER
+        auto it = characteristics.find(currID);
+        auto lambda = [&] (const auto& tuple) {
+            tuple.setID(currID);
+        };
+        std::visit(lambda, it->second);
+#endif
+
+        currID++;
     }
 
 public:

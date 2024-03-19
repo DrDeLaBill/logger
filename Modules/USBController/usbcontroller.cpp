@@ -138,25 +138,31 @@ void USBWorker::proccess(const USBRequestType type)
 
 USBCStatus USBWorker::loadLogProccess()
 {
-    uint32_t curLogId = DeviceInfo::min_id::get();
+    emit loadLogProgressUpdated(0);
+
+    uint32_t curLogId = 0;
     USBCStatus status = USBC_RES_OK;
 
-    DeviceInfo::record_loaded::set(0);
-    DeviceInfo::record_loaded::updated[0] = true;
-    if (handlerInfo.save() != USBC_RES_DONE) {
-        while (handlerInfo.load() != USBC_RES_DONE);
-    }
     DeviceInfo::current_id::set(curLogId);
     DeviceInfo::current_id::updated[0] = true;
     if (handlerInfo.save() != USBC_RES_DONE) {
-        while (handlerInfo.load() != USBC_RES_DONE);
+        while (handlerInfo.loadCharacteristic(DeviceInfo::current_id::ID) != USBC_RES_DONE);
+    }
+    DeviceInfo::record_loaded::set(0);
+    DeviceInfo::record_loaded::updated[0] = true;
+    if (handlerInfo.save() != USBC_RES_DONE) {
+        while (handlerInfo.loadCharacteristic(DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
     }
 
-    std::ofstream dump;
-    dump.open("C:\\Users\\georg\\Documents\\dump.csv");
-    dump << "LOG ID,TIME,ID,VALUE,\n";
+    while (handlerInfo.load() != USBC_RES_DONE);
+
+    std::string dumpStr = "";
     while (curLogId <= DeviceInfo::max_id::get()) {
-        status = handlerInfo.load();
+        status = handlerInfo.loadCharacteristic(DeviceInfo::record_loaded::ID);
+        if (status != USBC_RES_DONE) {
+            continue;
+        }
+        status = handlerInfo.loadCharacteristic(DeviceInfo::current_id::ID);
         if (status != USBC_RES_DONE) {
             continue;
         }
@@ -176,27 +182,31 @@ USBCStatus USBWorker::loadLogProccess()
 
         for (uint8_t i = 0; i < DeviceInfo::current_count::get(); i++) {
             if (i == 0) {
-                dump << DeviceRecord::id::get() << "," << DeviceRecord::time::get() << ",";
+                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
             } else {
-                dump << ",,";
+                dumpStr += ",,";
             }
-            dump << DeviceRecord::ID::get(i) << "," << DeviceRecord::value::get(i) << ",\n";
+            dumpStr += std::to_string(DeviceRecord::snsr_id::get(i)) + "," + std::to_string(DeviceRecord::value::get(i)) + ",\n";
         }
+
         emit loadLogProgressUpdated(curLogId);
 
         DeviceInfo::record_loaded::set(0);
         DeviceInfo::record_loaded::updated[0] = true;
-        if (handlerInfo.save() != USBC_RES_DONE) {
-            while (handlerInfo.load() != USBC_RES_DONE);
-        }
         DeviceInfo::current_id::set(curLogId);
         DeviceInfo::current_id::updated[0] = true;
-        if (handlerInfo.save() != USBC_RES_DONE) {
-            while (handlerInfo.load() != USBC_RES_DONE);
+        while (handlerInfo.save() != USBC_RES_DONE) {
+            while (handlerInfo.loadCharacteristic(DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
+            while (handlerInfo.loadCharacteristic(DeviceInfo::current_id::ID) != USBC_RES_DONE);
         }
+
         curLogId++;
     }
 
+    std::ofstream dump;
+    dump.open("C:\\Users\\georg\\Documents\\dump.csv");
+    dump << "LOG ID,TIME,ID,VALUE,\n";
+    dump << dumpStr.c_str();
     dump.close();
 
     return USBC_RES_DONE;

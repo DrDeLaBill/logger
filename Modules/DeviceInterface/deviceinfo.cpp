@@ -4,6 +4,7 @@
 DeviceInfo::info_t DeviceInfo::info;
 
 
+uint16_t DeviceInfo::time::ID;
 bool* DeviceInfo::time::updated;
 void DeviceInfo::time::set(uint32_t value, unsigned)
 {
@@ -16,6 +17,7 @@ uint32_t DeviceInfo::time::get(unsigned)
 }
 
 
+uint16_t DeviceInfo::min_id::ID;
 bool* DeviceInfo::min_id::updated;
 void DeviceInfo::min_id::set(uint32_t value, unsigned)
 {
@@ -28,6 +30,7 @@ uint32_t DeviceInfo::min_id::get(unsigned)
 }
 
 
+uint16_t DeviceInfo::max_id::ID;
 bool* DeviceInfo::max_id::updated;
 void DeviceInfo::max_id::set(uint32_t value, unsigned)
 {
@@ -40,6 +43,7 @@ uint32_t DeviceInfo::max_id::get(unsigned)
 }
 
 
+uint16_t DeviceInfo::current_id::ID;
 bool* DeviceInfo::current_id::updated;
 void DeviceInfo::current_id::set(uint32_t value, unsigned)
 {
@@ -52,6 +56,7 @@ uint32_t DeviceInfo::current_id::get(unsigned)
 }
 
 
+uint16_t DeviceInfo::current_count::ID;
 bool* DeviceInfo::current_count::updated;
 void DeviceInfo::current_count::set(uint32_t value, unsigned)
 {
@@ -64,6 +69,7 @@ uint32_t DeviceInfo::current_count::get(unsigned)
 }
 
 
+uint16_t DeviceInfo::record_loaded::ID;
 bool* DeviceInfo::record_loaded::updated;
 void DeviceInfo::record_loaded::set(uint32_t value, unsigned)
 {

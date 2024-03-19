@@ -40,6 +40,7 @@ bool DeviceSettings::check()
 }
 
 
+uint16_t DeviceSettings::dv_type::ID;
 bool* DeviceSettings::dv_type::updated;
 void DeviceSettings::dv_type::set(uint32_t value, unsigned)
 {
@@ -51,6 +52,7 @@ uint32_t DeviceSettings::dv_type::get(unsigned)
     return settings.dv_type;
 }
 
+uint16_t DeviceSettings::sw_id::ID;
 bool* DeviceSettings::sw_id::updated;
 void DeviceSettings::sw_id::set(uint32_t value, unsigned)
 {
@@ -62,6 +64,7 @@ uint32_t DeviceSettings::sw_id::get(unsigned)
     return settings.sw_id;
 }
 
+uint16_t DeviceSettings::fw_id::ID;
 bool* DeviceSettings::fw_id::updated;
 void DeviceSettings::fw_id::set(uint32_t value, unsigned)
 {
@@ -73,6 +76,7 @@ uint32_t DeviceSettings::fw_id::get(unsigned)
     return settings.fw_id;
 }
 
+uint16_t DeviceSettings::cf_id::ID;
 bool* DeviceSettings::cf_id::updated;
 void DeviceSettings::cf_id::set(uint32_t value, unsigned)
 {
@@ -84,6 +88,7 @@ uint32_t DeviceSettings::cf_id::get(unsigned)
     return settings.cf_id;
 }
 
+uint16_t DeviceSettings::record_period::ID;
 bool* DeviceSettings::record_period::updated;
 void DeviceSettings::record_period::set(uint32_t value, unsigned)
 {
@@ -95,6 +100,7 @@ uint32_t DeviceSettings::record_period::get(unsigned)
     return settings.record_period;
 }
 
+uint16_t DeviceSettings::send_period::ID;
 bool* DeviceSettings::send_period::updated;
 void DeviceSettings::send_period::set(uint32_t value, unsigned)
 {
@@ -106,6 +112,7 @@ uint32_t DeviceSettings::send_period::get(unsigned)
     return settings.send_period;
 }
 
+uint16_t DeviceSettings::record_id::ID;
 bool* DeviceSettings::record_id::updated;
 void DeviceSettings::record_id::set(uint32_t value, unsigned)
 {
@@ -117,6 +124,7 @@ uint32_t DeviceSettings::record_id::get(unsigned)
     return settings.record_id;
 }
 
+uint16_t DeviceSettings::modbus1_status::ID;
 bool* DeviceSettings::modbus1_status::updated;
 void DeviceSettings::modbus1_status::set(uint32_t value, unsigned index)
 {
@@ -128,6 +136,7 @@ uint32_t DeviceSettings::modbus1_status::get(unsigned index)
     return settings.modbus1_status[index];
 }
 
+uint16_t DeviceSettings::modbus1_value_reg::ID;
 bool* DeviceSettings::modbus1_value_reg::updated;
 void DeviceSettings::modbus1_value_reg::set(uint32_t value, unsigned index)
 {
@@ -139,6 +148,7 @@ uint32_t DeviceSettings::modbus1_value_reg::get(unsigned index)
     return settings.modbus1_value_reg[index];
 }
 
+uint16_t DeviceSettings::modbus1_id_reg::ID;
 bool* DeviceSettings::modbus1_id_reg::updated;
 void DeviceSettings::modbus1_id_reg::set(uint32_t value, unsigned index)
 {

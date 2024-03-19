@@ -109,6 +109,11 @@ struct HIDTuple : HIDTupleBase
         callback_c::updated[index] = false;
     }
 
+    void setID(const uint16_t ID) const
+    {
+        callback_c::ID = ID;
+    }
+
 #else
 
     unsigned index(const unsigned index = 0)

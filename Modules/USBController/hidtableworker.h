@@ -2,6 +2,8 @@
 #define HIDTABLEWORKER_H
 
 
+#include "gtime.h"
+
 #include "Timer.h"
 #include "FiniteStateMachine.h"
 
@@ -26,6 +28,7 @@ protected:
     static HIDController<Table> hid_table;
 
     static uint16_t characteristic_id;
+    static uint16_t stop_id;
     static unsigned errors_count;
     static USBCStatus result;
     static utl::Timer timer;
@@ -73,7 +76,7 @@ private:
     {
         result = USBC_RES_OK;
 
-        HIDService::init();
+        HIDService::init(HID_VENDOR_ID, HID_PRODUCT_ID);
 
         do {
             fsm.proccess();
@@ -95,6 +98,19 @@ public:
 
     USBCStatus load() const
     {
+        characteristic_id = START_ID;
+        stop_id           = maxID();
+
+        fsm.push_event(update_e{});
+
+        return usbSessionProccess();
+    }
+
+    USBCStatus loadCharacteristic(const uint16_t need_id) const
+    {
+        characteristic_id = need_id;
+        stop_id           = need_id;
+
         fsm.push_event(update_e{});
 
         return usbSessionProccess();
@@ -102,6 +118,9 @@ public:
 
     USBCStatus save() const
     {
+        characteristic_id = START_ID;
+        stop_id           = maxID();
+
         fsm.push_event(upgrade_e{});
 
         return usbSessionProccess();
@@ -116,6 +135,9 @@ HIDController<Table> HIDTableWorker<Table, START_ID>::hid_table(START_ID);
 
 template<class Table, uint16_t START_ID>
 uint16_t HIDTableWorker<Table, START_ID>::characteristic_id = START_ID;
+
+template<class Table, uint16_t START_ID>
+uint16_t HIDTableWorker<Table, START_ID>::stop_id = HIDTableWorker<Table, START_ID>::maxID();
 
 template<class Table, uint16_t START_ID>
 unsigned HIDTableWorker<Table, START_ID>::errors_count = 0;
@@ -149,7 +171,9 @@ void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
         return;
     }
 
-    if (characteristic_id > maxID()) {
+    if (characteristic_id > maxID() ||
+        characteristic_id > stop_id
+    ) {
         fsm.push_event(end_e{});
         result = USBC_RES_DONE;
         return;
@@ -162,7 +186,7 @@ void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
     hid_report_set_data(&report, data.get(), sizeof(uint16_t));
 
     try {
-        HIDService::sendReport(HID_VENDOR_ID, HID_PRODUCT_ID, report);
+        HIDService::sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});
@@ -212,7 +236,7 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
     hid_report_set_data(&report, data, sizeof(uint32_t));
 
     try {
-        HIDService::sendReport(HID_VENDOR_ID, HID_PRODUCT_ID, report);
+        HIDService::sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});
@@ -230,10 +254,11 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
 template<class Table, uint16_t START_ID>
 void HIDTableWorker<Table, START_ID>::init_characteristics_a::operator()(void) const
 {
-    fsm.clear_events();
-    characteristic_id = START_ID;
-    index = 0;
     errors_count = 0;
+    index = 0;
+
+    fsm.clear_events();
+
     timer.start();
 }
 

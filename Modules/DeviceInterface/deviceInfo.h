@@ -23,36 +23,42 @@ protected:
 public:
     struct time
     {
+        static uint16_t ID;
         static bool* updated;
         void set(uint32_t value, unsigned index = 0);
         uint32_t get(unsigned index = 0);
     };
     struct min_id
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct max_id
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct current_id
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct current_count
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);
     };
     struct record_loaded
     {
+        static uint16_t ID;
         static bool* updated;
         static void set(uint32_t value, unsigned index = 0);
         static uint32_t get(unsigned index = 0);

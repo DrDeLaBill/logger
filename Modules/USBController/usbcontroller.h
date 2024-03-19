@@ -76,10 +76,10 @@ private:
     static constexpr unsigned INFO_MAX_ID = info_worker_t::maxID();
 
     using table_record_t = HIDTable<
-        HIDTuple<uint32_t, DeviceRecord::id>,
+        HIDTuple<uint32_t, DeviceRecord::rcrd_id>,
         HIDTuple<uint32_t, DeviceRecord::time>,
-        HIDTuple<uint8_t,  DeviceRecord::ID,    __arr_len(DeviceRecord::record_t::ID)>,
-        HIDTuple<uint16_t, DeviceRecord::value, __arr_len(DeviceRecord::record_t::value)>
+        HIDTuple<uint8_t,  DeviceRecord::snsr_id, __arr_len(DeviceRecord::record_t::ID)>,
+        HIDTuple<uint16_t, DeviceRecord::value,   __arr_len(DeviceRecord::record_t::value)>
     >;
     using record_worker_t = HIDTableWorker<table_record_t, INFO_MAX_ID + 1>;
 
