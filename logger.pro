@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -9,7 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    $$files($$PWD/Modules/USBController/HIDTable/*.c, true) \
+    $$files($$PWD/Modules/USBController/COMTable/*.c, true) \
     $$files($$PWD/Modules/USBController/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Log/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Time/*.cpp, true) \
@@ -25,14 +25,14 @@ SOURCES += \
 
 HEADERS += \
     Modules/Exceptions/app_exception.h \
-    Modules/USBController/HIDService/hidservice.h \
-    Modules/USBController/HIDTable/HIDController.h \
-    Modules/USBController/hidtableworker.h \
+    Modules/USBController/COMService/comservice.h \
+    Modules/USBController/COMTable/COMController.h \
+    Modules/USBController/comtableworker.h \
     Modules/USBController/usbcstatus.h \
     Modules/USBController/usbcontroller.h \
-    Modules/USBController/HIDTable/HIDTable.h \
-    Modules/USBController/HIDTable/HIDTuple.h \
-    Modules/USBController/HIDTable/HIDHash.h \
+    Modules/USBController/COMTable/COMTable.h \
+    Modules/USBController/COMTable/COMTuple.h \
+    Modules/USBController/COMTable/COMHash.h \
     Widgets/SensorBox/sensordata.h \
     Widgets/SensorBox/sensorbox.h \
     mainwindow.h
@@ -54,8 +54,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 # Custom includes
 INCLUDEPATH += $$PWD/Modules/DeviceInterface
 INCLUDEPATH += $$PWD/Modules/Exceptions
-INCLUDEPATH += $$PWD/Modules/USBController/HIDService
-INCLUDEPATH += $$PWD/Modules/USBController/HIDTable
+INCLUDEPATH += $$PWD/Modules/USBController/COMService
+INCLUDEPATH += $$PWD/Modules/USBController/COMTable
 INCLUDEPATH += $$PWD/Modules/USBController/USBReport
 INCLUDEPATH += $$PWD/Modules/USBController
 INCLUDEPATH += $$PWD/Modules/libusb/include/libusb-1.0

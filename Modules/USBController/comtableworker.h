@@ -1,5 +1,5 @@
-#ifndef HIDTABLEWORKER_H
-#define HIDTABLEWORKER_H
+#ifndef COMTABLEWORKER_H
+#define COMTABLEWORKER_H
 
 
 #include "gtime.h"
@@ -7,25 +7,25 @@
 #include "Timer.h"
 #include "FiniteStateMachine.h"
 
-#include "HIDTable.h"
+#include "COMTable.h"
 #include "usbdreport.h"
-#include "hidservice.h"
+#include "comservice.h"
 #include "usbcstatus.h"
-#include "HIDController.h"
+#include "COMController.h"
 
 
 template<class Table, uint16_t START_ID>
-struct HIDTableWorker
+struct COMTableWorker
 {
     static_assert(
         !utl::empty(typename utl::typelist_t<Table>::RESULT{}),
-        "HIDTableWorker must not be empty"
+        "COMTableWorker must not be empty"
     );
 
 protected:
     static constexpr unsigned ERRORS_COUNT_MAX = 5;
 
-    static HIDController<Table> hid_table;
+    static COMController<Table> hid_table;
 
     static uint16_t characteristic_id;
     static uint16_t stop_id;
@@ -76,13 +76,13 @@ private:
     {
         result = USBC_RES_OK;
 
-        HIDService::init(HID_VENDOR_ID, HID_PRODUCT_ID);
+        COMService::init(COM_PRODUCT_ID);
 
         do {
             fsm.proccess();
         } while (!fsm.is_state(idle_s{}));
 
-        HIDService::deinit();
+        COMService::deinit();
 
         return result;
     }
@@ -93,7 +93,7 @@ protected:
 public:
     static constexpr uint16_t maxID()
     {
-        return START_ID + HIDController<Table>::count() - 1;
+        return START_ID + COMController<Table>::count() - 1;
     }
 
     USBCStatus load() const
@@ -128,34 +128,34 @@ public:
 };
 
 template<class Table, uint16_t START_ID>
-fsm::FiniteStateMachine<typename HIDTableWorker<Table, START_ID>::fsm_table> HIDTableWorker<Table, START_ID>::fsm;
+fsm::FiniteStateMachine<typename COMTableWorker<Table, START_ID>::fsm_table> COMTableWorker<Table, START_ID>::fsm;
 
 template<class Table, uint16_t START_ID>
-HIDController<Table> HIDTableWorker<Table, START_ID>::hid_table(START_ID);
+COMController<Table> COMTableWorker<Table, START_ID>::hid_table(START_ID);
 
 template<class Table, uint16_t START_ID>
-uint16_t HIDTableWorker<Table, START_ID>::characteristic_id = START_ID;
+uint16_t COMTableWorker<Table, START_ID>::characteristic_id = START_ID;
 
 template<class Table, uint16_t START_ID>
-uint16_t HIDTableWorker<Table, START_ID>::stop_id = HIDTableWorker<Table, START_ID>::maxID();
+uint16_t COMTableWorker<Table, START_ID>::stop_id = COMTableWorker<Table, START_ID>::maxID();
 
 template<class Table, uint16_t START_ID>
-unsigned HIDTableWorker<Table, START_ID>::errors_count = 0;
+unsigned COMTableWorker<Table, START_ID>::errors_count = 0;
 
 template<class Table, uint16_t START_ID>
-USBCStatus HIDTableWorker<Table, START_ID>::result = USBC_RES_OK;
+USBCStatus COMTableWorker<Table, START_ID>::result = USBC_RES_OK;
 
 template<class Table, uint16_t START_ID>
-uint8_t HIDTableWorker<Table, START_ID>::index = 0;
+uint8_t COMTableWorker<Table, START_ID>::index = 0;
 
 template<class Table, uint16_t START_ID>
-utl::Timer HIDTableWorker<Table, START_ID>::timer(HID_DELAY_MS);
+utl::Timer COMTableWorker<Table, START_ID>::timer(COM_DELAY_MS);
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::_idle_s::operator()(void) const {}
+void COMTableWorker<Table, START_ID>::_idle_s::operator()(void) const {}
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
+void COMTableWorker<Table, START_ID>::_update_s::operator()(void) const
 {
     result = USBC_RES_OK;
 
@@ -180,13 +180,13 @@ void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
     }
 
     report_pack_t report = {};
-    report.characteristic_id = HID_GETTER_ID;
+    report.characteristic_id = COM_GETTER_ID;
     report.index = index;
     std::shared_ptr<uint8_t[]> data = utl::serialize<uint16_t>(&characteristic_id);
-    hid_report_set_data(&report, data.get(), sizeof(uint16_t));
+    com_report_set_data(&report, data.get(), sizeof(uint16_t));
 
     try {
-        HIDService::sendReport(report);
+        COMService::sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});
@@ -201,7 +201,7 @@ void HIDTableWorker<Table, START_ID>::_update_s::operator()(void) const
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
+void COMTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
 {
     result = USBC_RES_OK;
 
@@ -236,7 +236,7 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
     hid_report_set_data(&report, data, sizeof(uint32_t));
 
     try {
-        HIDService::sendReport(report);
+        COMService::sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});
@@ -252,7 +252,7 @@ void HIDTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::init_characteristics_a::operator()(void) const
+void COMTableWorker<Table, START_ID>::init_characteristics_a::operator()(void) const
 {
     errors_count = 0;
     index = 0;
@@ -263,7 +263,7 @@ void HIDTableWorker<Table, START_ID>::init_characteristics_a::operator()(void) c
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void) const
+void COMTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void) const
 {
     index++;
 
@@ -277,17 +277,17 @@ void HIDTableWorker<Table, START_ID>::iterate_characteristics_a::operator()(void
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::start_idle_a::operator()(void) const
+void COMTableWorker<Table, START_ID>::start_idle_a::operator()(void) const
 {
     fsm.clear_events();
 }
 
 template<class Table, uint16_t START_ID>
-void HIDTableWorker<Table, START_ID>::count_error_a::operator()(void) const
+void COMTableWorker<Table, START_ID>::count_error_a::operator()(void) const
 {
     fsm.clear_events();
     errors_count++;
     timer.start();
 }
 
-#endif // HIDTableWorker_H
+#endif // COMTableWorker_H

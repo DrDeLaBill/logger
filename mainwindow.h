@@ -17,7 +17,7 @@
 #include "sensorbox.h"
 #include "sensorlist.h"
 #include "usbcontroller.h"
-#include "hidtableworker.h"
+#include "comtableworker.h"
 
 
 QT_BEGIN_NAMESPACE

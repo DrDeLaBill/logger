@@ -16,8 +16,8 @@
 #include "utils.h"
 
 #include "usbcstatus.h"
-#include "HIDController.h"
-#include "hidtableworker.h"
+#include "COMController.h"
+#include "comtableworker.h"
 
 #include "devicesettings.h"
 #include "deviceinfo.h"
@@ -49,39 +49,39 @@ signals:
 private:
     static constexpr char TAG[] = "USBW";
 
-    using table_settings_t = HIDTable<
-        HIDTuple<uint16_t, DeviceSettings::dv_type>,
-        HIDTuple<uint8_t,  DeviceSettings::sw_id>,
-        HIDTuple<uint8_t,  DeviceSettings::fw_id>,
-        HIDTuple<uint32_t, DeviceSettings::cf_id>,
-        HIDTuple<uint32_t, DeviceSettings::record_period>,
-        HIDTuple<uint32_t, DeviceSettings::send_period>,
-        HIDTuple<uint32_t, DeviceSettings::record_id>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
-        HIDTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
+    using table_settings_t = COMTable<
+        COMTuple<uint16_t, DeviceSettings::dv_type>,
+        COMTuple<uint8_t,  DeviceSettings::sw_id>,
+        COMTuple<uint8_t,  DeviceSettings::fw_id>,
+        COMTuple<uint32_t, DeviceSettings::cf_id>,
+        COMTuple<uint32_t, DeviceSettings::record_period>,
+        COMTuple<uint32_t, DeviceSettings::send_period>,
+        COMTuple<uint32_t, DeviceSettings::record_id>,
+        COMTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
+        COMTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
+        COMTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>
     >;
-    using settings_worker_t = HIDTableWorker<table_settings_t, HID_FIRST_KEY>;
+    using settings_worker_t = COMTableWorker<table_settings_t, COM_FIRST_KEY>;
     static constexpr unsigned SETTINGS_MAX_ID = settings_worker_t::maxID();
 
-    using table_info_t = HIDTable<
-        HIDTuple<uint32_t, DeviceInfo::time>,
-        HIDTuple<uint32_t, DeviceInfo::min_id>,
-        HIDTuple<uint32_t, DeviceInfo::max_id>,
-        HIDTuple<uint32_t, DeviceInfo::current_id>,
-        HIDTuple<uint32_t, DeviceInfo::current_count>,
-        HIDTuple<uint8_t,  DeviceInfo::record_loaded>
+    using table_info_t = COMTable<
+        COMTuple<uint32_t, DeviceInfo::time>,
+        COMTuple<uint32_t, DeviceInfo::min_id>,
+        COMTuple<uint32_t, DeviceInfo::max_id>,
+        COMTuple<uint32_t, DeviceInfo::current_id>,
+        COMTuple<uint32_t, DeviceInfo::current_count>,
+        COMTuple<uint8_t,  DeviceInfo::record_loaded>
     >;
-    using info_worker_t = HIDTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
+    using info_worker_t = COMTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
     static constexpr unsigned INFO_MAX_ID = info_worker_t::maxID();
 
-    using table_record_t = HIDTable<
-        HIDTuple<uint32_t, DeviceRecord::rcrd_id>,
-        HIDTuple<uint32_t, DeviceRecord::time>,
-        HIDTuple<uint8_t,  DeviceRecord::snsr_id, __arr_len(DeviceRecord::record_t::ID)>,
-        HIDTuple<uint16_t, DeviceRecord::value,   __arr_len(DeviceRecord::record_t::value)>
+    using table_record_t = COMTable<
+        COMTuple<uint32_t, DeviceRecord::rcrd_id>,
+        COMTuple<uint32_t, DeviceRecord::time>,
+        COMTuple<uint8_t,  DeviceRecord::snsr_id, __arr_len(DeviceRecord::record_t::ID)>,
+        COMTuple<uint16_t, DeviceRecord::value,   __arr_len(DeviceRecord::record_t::value)>
     >;
-    using record_worker_t = HIDTableWorker<table_record_t, INFO_MAX_ID + 1>;
+    using record_worker_t = COMTableWorker<table_record_t, INFO_MAX_ID + 1>;
 
     static settings_worker_t handlerSettings;
     static info_worker_t handlerInfo;

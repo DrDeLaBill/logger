@@ -27,7 +27,7 @@ USBController::USBController(): worker()
     worker.moveToThread(&workerThread);
 
     QObject::connect(&workerThread, &QThread::finished, &worker, &QObject::deleteLater);
-    // USB HID device check
+    // USB COM device check
     // Read characteristics
     QObject::connect(this, &USBController::request, &worker, &USBWorker::proccess);
     QObject::connect(&worker, &USBWorker::resultReady, this, &USBController::handleResults);
@@ -204,7 +204,11 @@ USBCStatus USBWorker::loadLogProccess()
     }
 
     std::ofstream dump;
-    dump.open("C:\\Users\\georg\\Documents\\dump.csv");
+    dump.open(
+        std::string("dump") +
+        std::to_string(getMillis()) +
+        std::string(".csv")
+    );
     dump << "LOG ID,TIME,ID,VALUE,\n";
     dump << dumpStr.c_str();
     dump.close();
