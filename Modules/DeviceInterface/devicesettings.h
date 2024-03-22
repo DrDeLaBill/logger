@@ -59,71 +59,71 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct sw_id
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct fw_id
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct cf_id
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct record_period
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct send_period
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct record_id
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct modbus1_status
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct modbus1_value_reg
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct modbus1_id_reg
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
 
     static unsigned getIndex(const unsigned index = 0);

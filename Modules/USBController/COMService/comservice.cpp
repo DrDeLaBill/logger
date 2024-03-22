@@ -7,6 +7,7 @@
 #include <QString>
 
 #include "log.h"
+#include "Timer.h"
 #include "variables.h"
 
 #include "com_defs.h"
@@ -15,75 +16,72 @@
 #include "app_exception.h"
 
 
-std::unique_ptr<QSerialPort> COMService::port;
+#define RESPONSE_DELAY_MS (1000)
 
 
-void COMService::init(QString portName)
+void COMService::init(const std::string& portName)
 {
+    port = std::make_unique<QSerialPort>();
 
+    port->setPortName(QString(portName.c_str()));
+    port->setBaudRate(115200);
+    port->setDataBits(QSerialPort::Data8);
+    port->setParity(QSerialPort::NoParity);
+    port->setStopBits(QSerialPort::OneStop);
+    port->setFlowControl(QSerialPort::NoFlowControl);
+
+    if(!port->open(QIODevice::ReadWrite)) {
+        deinit();
+        throw exceptions::UsbInitException();
+    }
 }
 
 void COMService::deinit()
 {
+    port->clear();
+    port->close();
 
-}
-
-bool COMService::isDeviceConnected(uint16_t vendorId, uint16_t productId)
-{
-    return checkDevice(vendorId, productId);
+    port.reset();
 }
 
 void COMService::sendReport(const report_pack_t& request)
 {
     USBHReport::createReport(request);
 
-    int resLength = 0;
     try {
+        port->write(reinterpret_cast<char*>(&(USBHReport::getReport())));
 
-
-
-
-
-//        int res = libusb_interrupt_transfer(
-//            handle,
-//            COM_OUTPUT_ENDPOINT,
-//            reinterpret_cast<uint8_t*>(&USBHReport::getReport()),
-//            dev_desc.bLength,
-//            &resLength,
-//            COM_DELAY_MS
-//        );
-//        if (res < 0) {
-//            // TODO: timeout for timeouts (if device has another version)
-//            throw exceptions::UsbTimeoutException();
-//        }
-//        if (resLength != sizeof(request)) {
-//            throw exceptions::UsbReportException();
-//        }
-
-//        report_pack_t response = {};
-//        res = libusb_interrupt_transfer(
-//            handle,
-//            COM_INPUT_ENDPOINT,
-//            reinterpret_cast<uint8_t*>(&response),
-//            dev_desc.bLength,
-//            &resLength,
-//            COM_DELAY_MS
-//        );
-        if (res < 0) {
-            // TODO: timeout for timeouts (if device has another version)
+        if (!port->waitForBytesWritten(30000)) {
             throw exceptions::UsbTimeoutException();
         }
 
-        try {
-            USBDReport::setReport(response);
-        } catch (...) {
-            throw;
+        utl::Timer timer(RESPONSE_DELAY_MS);
+        timer.start();
+
+        while (!port->bytesAvailable()) {
+            if (!timer.wait()) {
+                throw exceptions::UsbTimeoutException();
+            }
         }
 
-        if (resLength == 0) {
+        QByteArray response;
+        while (port->bytesAvailable()) {
+            response += port->readAll();
+        }
+
+        if (response.size() != sizeof(report_pack_t)) {
             throw exceptions::UsbReportException();
         }
+
+        report_pack_t reportPack;
+        uint8_t* reportPack_ptr = reinterpret_cast<uint8_t*>(&reportPack);
+        for (unsigned i = 0; i < response.size(); i++) {
+            reportPack_ptr[i] = response[i];
+        }
+
+        USBDReport::setReport(reportPack);
     } catch (...) {
+        deinit();
         throw;
     }
 }

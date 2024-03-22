@@ -31,6 +31,7 @@ extern "C" {
 static const char COM_TAG[] = "COM";
 
 
+// TODO: struct is not packed
 typedef struct __attribute__((packed)) _report_pack_t {
 	uint8_t  flag;
     uint16_t characteristic_id;

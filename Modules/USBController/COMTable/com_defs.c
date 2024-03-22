@@ -9,6 +9,7 @@
 #endif
 
 #include "log.h"
+#include "utils.h"
 #include "bmacro.h"
 
 

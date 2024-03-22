@@ -9,6 +9,9 @@
 #include <QMessageBox>
 #include <QWheelEvent>
 
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+
 #include "log.h" // TODO: remove
 #include "hal_defs.h"
 
@@ -19,6 +22,7 @@
 #define TIME_STRING_LEN      (25)
 #define INFO_TIMEOUT_MS      (200)
 #define SAVE_TIMEOUT_MS      (10000)
+#define SELECT_UPDATE_MS     (1000)
 
 
 Ui::MainWindow* MainWindow::ui = new Ui::MainWindow();
@@ -47,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 
     infoTimer = new QTimer(this);
     QObject::connect(infoTimer, QTimer::timeout, this, MainWindow::onInfoTimeout);
-    infoTimer->start(INFO_TIMEOUT_MS);
 
     saveTimer = new QTimer(this);
     QObject::connect(saveTimer, QTimer::timeout, this, MainWindow::onSaveTimeout);
@@ -59,25 +62,25 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
         on_verticalScrollBar_valueChanged
     );
 
-
-    ui->updateBtn->click();
+    ui->updatePortsBtn->click();
 }
 
 MainWindow::~MainWindow()
 {
     infoTimer->deleteLater();
     saveTimer->deleteLater();
+
     clearSensors();
     firstSensor->deleteLater();
     delete sensorListBox;
+
     QMainWindow::~QMainWindow();
 }
 
 void MainWindow::setError(const QString& str)
 {
     ui->statusbar->showMessage(str);
-    ui->device_label->setText("Logger");
-    ui->version_label->setText("error");
+    ui->device_label->setText("Logger error");
     QMessageBox messageBox;
     if (infoTimer) {
         infoTimer->stop();
@@ -107,7 +110,7 @@ void MainWindow::on_updateTimeBtn_clicked()
 
     saveTimer->start(SAVE_TIMEOUT_MS);
     MainWindow::setLoading();
-    usbcontroller.saveInfo();
+    usbcontroller.saveInfo(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_SAVE_INFO;
 
     if (infoTimer) {
@@ -119,7 +122,7 @@ void MainWindow::on_updateBtn_clicked()
 {
     clearSensors();
     MainWindow::setLoading();
-    usbcontroller.loadSettings();
+    usbcontroller.loadSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_LOAD_SETTINGS;
 
     if (infoTimer) {
@@ -135,7 +138,7 @@ void MainWindow::on_upgradeBtn_clicked()
 
     saveTimer->start(SAVE_TIMEOUT_MS);
     MainWindow::setLoading();
-    usbcontroller.saveSettings();
+    usbcontroller.saveSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_SAVE_SETTINGS;
 
     if (infoTimer) {
@@ -146,7 +149,7 @@ void MainWindow::on_upgradeBtn_clicked()
 void MainWindow::on_dumpBtn_clicked()
 {
     MainWindow::setLoading();
-    usbcontroller.loadLog();
+    usbcontroller.loadLog(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_LOAD_LOG;
 
     if (infoTimer) {
@@ -182,7 +185,7 @@ void MainWindow::onInfoTimeout()
         return;
     }
     if (requestType == USB_REQUEST_NONE) {
-        usbcontroller.loadInfo();
+        usbcontroller.loadInfo(ui->serialPortSelect->currentText());
         requestType = USB_REQUEST_LOAD_INFO;
     }
 
@@ -285,6 +288,8 @@ void MainWindow::disableAll()
     ui->upgradeBtn->setDisabled(true);
     ui->updateTimeBtn->setDisabled(true);
 
+    infoTimer->stop();
+
     if (firstSensor) {
         firstSensor->disable();
     }
@@ -324,6 +329,26 @@ void MainWindow::updateScrollBar()
     sensorListBox->verticalScrollBar->setValue(0);
 }
 
+void MainWindow::updateCOMSelect()
+{
+    ui->serialPortSelect->clear();
+    ui->serialPortSelect->addItem("none");
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+        ui->serialPortSelect->addItem(info.portName());
+
+
+        // TODO: remove
+        // qDebug() << "Name : " << info.portName();
+        // qDebug() << "Description : " << info.description();
+        // qDebug() << "Manufacturer: " << info.manufacturer();
+
+        // QSerialPort serial;
+        // serial.setPort(info);
+        // if (serial.open(QIODevice::ReadWrite))
+        //     serial.close();
+    }
+}
+
 void MainWindow::clearSensors()
 {
     if (sensors.size() == 0) {
@@ -353,9 +378,13 @@ void MainWindow::showSettings(const USBRequestType type)
 
     enableAll();
 
-    ui->device_label->setText("Logger");
-    std::string version = "v0." + std::to_string(DeviceSettings::fw_id{}.get()) + "." + std::to_string(DeviceSettings::sw_id{}.get());
-    ui->version_label->setText(version.c_str());
+    ui->device_label->setText(std::string(
+        std::string("Logger") +
+        std::string("v0.") + // TODO: add version parameter
+        std::to_string(DeviceSettings::fw_id{}.get()) +
+        std::string(".") +
+        std::to_string(DeviceSettings::sw_id{}.get())
+    ).c_str());
 
     ui->record_period->blockSignals(true);
     ui->record_period->setText(std::to_string(DeviceSettings::record_period{}.get()).c_str());
@@ -511,5 +540,22 @@ void QWidget::wheelEvent(QWheelEvent *event)
     } else {
         MainWindow::sensorListBox->mouseWheelDown();
     }
+}
+
+void MainWindow::on_serialPortSelect_activated(int index)
+{
+    qDebug() << "Selected port: " << ui->serialPortSelect->itemText(index); // TODO: remove
+
+
+    ui->updateBtn->click();
+
+
+    infoTimer->start(INFO_TIMEOUT_MS);
+}
+
+void MainWindow::on_updatePortsBtn_clicked()
+{
+    updateCOMSelect();
+    disableAll();
 }
 

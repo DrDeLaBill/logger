@@ -25,8 +25,8 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        void set(uint32_t value, unsigned index = 0);
-        uint32_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct min_id
     {

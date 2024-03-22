@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>502</height>
+    <height>505</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -417,14 +417,27 @@ QPushButton::hover {
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
         </widget>
-        <widget class="QComboBox" name="comboBox">
+        <widget class="QComboBox" name="serialPortSelect">
          <property name="geometry">
           <rect>
            <x>160</x>
            <y>10</y>
-           <width>201</width>
+           <width>161</width>
            <height>31</height>
           </rect>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="updatePortsBtn">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>10</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>U</string>
          </property>
         </widget>
        </widget>

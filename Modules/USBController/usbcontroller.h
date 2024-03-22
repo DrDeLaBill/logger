@@ -40,7 +40,7 @@ class USBWorker : public QObject
     Q_OBJECT
 
 public slots:
-    void proccess(const USBRequestType type);
+    void proccess(const USBRequestType type, const QString& port);
 
 signals:
     void resultReady(const USBRequestType type, const USBCStatus status);
@@ -87,7 +87,7 @@ private:
     static info_worker_t handlerInfo;
     static record_worker_t handlerRecord;
 
-    USBCStatus loadLogProccess();
+    USBCStatus loadLogProccess(const std::string& port);
 
 };
 
@@ -108,11 +108,11 @@ public:
     USBController();
     ~USBController();
 
-    void loadSettings();
-    void saveSettings();
-    void loadInfo();
-    void saveInfo();
-    void loadLog();
+    void loadSettings(const QString& port);
+    void saveSettings(const QString& port);
+    void loadInfo(const QString& port);
+    void saveInfo(const QString& port);
+    void loadLog(const QString& port);
 
 
 public slots:
@@ -120,7 +120,7 @@ public slots:
     void onLoadLogProgressUpdated(uint32_t value); // TODO: USBWorker -> MainWindow
 
 signals:
-    void request(const USBRequestType type);
+    void request(const USBRequestType type, const QString& port);
     void responseReady(const USBRequestType type, const USBCStatus status);
     void error(const QString& message);
     void loadLogProgressUpdated(uint32_t value); // TODO: USBWorker -> MainWindow

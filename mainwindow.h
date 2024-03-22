@@ -44,10 +44,13 @@ private:
     static QTimer* saveTimer;
     static QTimer* infoTimer;
 
+    QString port;
+
     void showSettings(const USBRequestType type);
     void clearSettings();
     void clearSensors();
     void updateScrollBar();
+    void updateCOMSelect();
 
 protected:
     static constexpr char TAG[] = "MAIN";
@@ -78,6 +81,10 @@ private slots:
     void on_dumpBtn_clicked();
 
     void onLoadLogProgressUpdated(uint32_t value);
+
+    void on_serialPortSelect_activated(int index);
+
+    void on_updatePortsBtn_clicked();
 
 public:
     static SensorList* sensorListBox;
