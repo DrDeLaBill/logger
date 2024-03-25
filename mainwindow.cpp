@@ -74,7 +74,7 @@ MainWindow::~MainWindow()
     firstSensor->deleteLater();
     delete sensorListBox;
 
-    QMainWindow::~QMainWindow();
+    // QMainWindow::~QMainWindow(); // TODO
 }
 
 void MainWindow::setError(const QString& str)

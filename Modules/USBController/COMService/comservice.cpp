@@ -7,7 +7,6 @@
 #include <QString>
 
 #include "log.h"
-#include "Timer.h"
 #include "variables.h"
 
 #include "com_defs.h"
@@ -16,7 +15,7 @@
 #include "app_exception.h"
 
 
-#define RESPONSE_DELAY_MS (1000)
+#define COM_REPORT_DELAY_MS (1000)
 
 
 void COMService::init(const std::string& portName)
@@ -49,24 +48,24 @@ void COMService::sendReport(const report_pack_t& request)
     USBHReport::createReport(request);
 
     try {
-        port->write(reinterpret_cast<char*>(&(USBHReport::getReport())));
-
-        if (!port->waitForBytesWritten(30000)) {
+        const QByteArray requestArray(reinterpret_cast<char*>(&(USBHReport::getReport())), sizeof(report_pack_t));
+        qint64 res = port->write(requestArray);
+        if (res != sizeof(report_pack_t)) {
             throw exceptions::UsbTimeoutException();
         }
 
-        utl::Timer timer(RESPONSE_DELAY_MS);
-        timer.start();
+        if (!port->waitForBytesWritten(COM_REPORT_DELAY_MS)) {
+            throw exceptions::UsbTimeoutException();
+        }
 
-        while (!port->bytesAvailable()) {
-            if (!timer.wait()) {
-                throw exceptions::UsbTimeoutException();
-            }
+        if (!port->waitForReadyRead(COM_REPORT_DELAY_MS)) {
+            throw exceptions::UsbTimeoutException();
         }
 
         QByteArray response;
         while (port->bytesAvailable()) {
             response += port->readAll();
+            port->clear();
         }
 
         if (response.size() != sizeof(report_pack_t)) {
@@ -80,8 +79,9 @@ void COMService::sendReport(const report_pack_t& request)
         }
 
         USBDReport::setReport(reportPack);
+
+        port->clear();
     } catch (...) {
-        deinit();
         throw;
     }
 }

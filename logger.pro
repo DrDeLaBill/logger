@@ -58,7 +58,6 @@ INCLUDEPATH += $$PWD/Modules/USBController/COMService
 INCLUDEPATH += $$PWD/Modules/USBController/COMTable
 INCLUDEPATH += $$PWD/Modules/USBController/USBReport
 INCLUDEPATH += $$PWD/Modules/USBController
-INCLUDEPATH += $$PWD/Modules/libusb/include/libusb-1.0
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Log
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Time
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Debug
@@ -69,7 +68,5 @@ INCLUDEPATH += $$PWD/Modules/Utils/utils/TypeList
 INCLUDEPATH += $$PWD/Modules/Utils/utils/HALDEFS
 INCLUDEPATH += $$PWD/Widgets/SensorList
 INCLUDEPATH += $$PWD/Widgets/SensorBox
-
-LIBS        += $$files($$PWD/Modules/libusb/lib/*.a, true)
 
 QMAKE_CXXFLAGS += -Og

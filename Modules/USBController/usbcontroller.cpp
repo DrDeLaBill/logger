@@ -5,8 +5,6 @@
 
 #include <cstdio>
 
-#include <libusb.h>
-
 #include "log.h" // TODO
 
 #include "mainwindow.h"

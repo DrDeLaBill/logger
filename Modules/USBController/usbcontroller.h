@@ -11,8 +11,6 @@
 #include <QObject>
 #include <QString>
 
-#include <libusb.h>
-
 #include "utils.h"
 
 #include "usbcstatus.h"
