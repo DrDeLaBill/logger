@@ -18,12 +18,19 @@
 #define COM_REPORT_DELAY_MS (1000)
 
 
+COMService::~COMService()
+{
+    if (port && port->isOpen()) {
+        this->deinit();
+    }
+}
+
 void COMService::init(const std::string& portName)
 {
     port = std::make_unique<QSerialPort>();
 
     port->setPortName(QString(portName.c_str()));
-    port->setBaudRate(115200);
+    port->setBaudRate(12000000);
     port->setDataBits(QSerialPort::Data8);
     port->setParity(QSerialPort::NoParity);
     port->setStopBits(QSerialPort::OneStop);
@@ -37,7 +44,14 @@ void COMService::init(const std::string& portName)
 
 void COMService::deinit()
 {
+    if (!port) {
+        return;
+    }
     port->clear();
+
+    if (!port->isOpen()) {
+        return;
+    }
     port->close();
 
     port.reset();

@@ -26,7 +26,7 @@ protected:
     static constexpr unsigned ERRORS_COUNT_MAX = 5;
 
     static COMController<Table> com_table;
-    static COMService comService;
+    static COMService* comService;
 
     static uint16_t characteristic_id;
     static uint16_t stop_id;
@@ -73,17 +73,13 @@ private:
         fsm::Transition<upgrade_s, error_e,   idle_s,    init_characteristics_a,    fsm::Guard::NO_GUARD>
     >;
 
-    USBCStatus usbSessionProccess(const std::string& port) const
+    USBCStatus usbSessionProccess() const
     {
         result = USBC_RES_OK;
-
-        comService.init(port);
 
         do {
             fsm.proccess();
         } while (!fsm.is_state(idle_s{}));
-
-        comService.deinit();
 
         return result;
     }
@@ -97,34 +93,37 @@ public:
         return START_ID + COMController<Table>::count() - 1;
     }
 
-    USBCStatus load(const std::string& port) const
+    USBCStatus load(const COMService& service) const
     {
+        comService        = const_cast<COMService*>(&service);
         characteristic_id = START_ID;
         stop_id           = maxID();
 
         fsm.push_event(update_e{});
 
-        return usbSessionProccess(port);
+        return usbSessionProccess();
     }
 
-    USBCStatus loadCharacteristic(const std::string& port, const uint16_t need_id) const
+    USBCStatus loadCharacteristic(const COMService& service, const uint16_t need_id) const
     {
+        comService        = const_cast<COMService*>(&service);
         characteristic_id = need_id;
         stop_id           = need_id;
 
         fsm.push_event(update_e{});
 
-        return usbSessionProccess(port);
+        return usbSessionProccess();
     }
 
-    USBCStatus save(const std::string& port) const
+    USBCStatus save(const COMService& service) const
     {
+        comService        = const_cast<COMService*>(&service);
         characteristic_id = START_ID;
         stop_id           = maxID();
 
         fsm.push_event(upgrade_e{});
 
-        return usbSessionProccess(port);
+        return usbSessionProccess();
     }
 };
 
@@ -135,7 +134,7 @@ template<class Table, uint16_t START_ID>
 COMController<Table> COMTableWorker<Table, START_ID>::com_table(START_ID);
 
 template<class Table, uint16_t START_ID>
-COMService COMTableWorker<Table, START_ID>::comService;
+COMService* COMTableWorker<Table, START_ID>::comService;
 
 template<class Table, uint16_t START_ID>
 uint16_t COMTableWorker<Table, START_ID>::characteristic_id = START_ID;
@@ -190,7 +189,7 @@ void COMTableWorker<Table, START_ID>::_update_s::operator()(void) const
     com_report_set_data(&report, data.get(), sizeof(uint16_t));
 
     try {
-        comService.sendReport(report);
+        comService->sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});
@@ -240,7 +239,7 @@ void COMTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
     com_report_set_data(&report, data, sizeof(uint32_t));
 
     try {
-        comService.sendReport(report);
+        comService->sendReport(report);
     } catch (...) {
         result = USBC_RES_ERROR;
         fsm.push_event(timeout_e{});

@@ -49,14 +49,19 @@ void SensorBox::init()
             "}"
         )
     );
+
     QFont font3;
+
     sensor_value_label = new QLabel(this->sensor_box);
     sensor_value_label->setObjectName("sensor_value_label");
     sensor_value_label->setGeometry(QRect(230, 10, 51, 31));
     sensor_value_label->setText(std::to_string(data.sensorID).c_str());
+
     QFont font4;
     font4.setPointSize(12);
+
     sensor_value_label->setFont(font4);
+
     sensor_id_text_edit = new QTextEdit(this->sensor_box);
     sensor_id_text_edit->setObjectName("sensor_id_edit");
     sensor_id_text_edit->setGeometry(QRect(10, 10, 51, 31));
@@ -64,6 +69,7 @@ void SensorBox::init()
     sensor_id_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     sensor_id_text_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     sensor_id_text_edit->setTabChangesFocus(true);
+
     sensor_id_reg_text_edit = new QTextEdit(this->sensor_box);
     sensor_id_reg_text_edit->setObjectName("sensorid_id_reg_text_edit");
     sensor_id_reg_text_edit->setGeometry(QRect(70, 10, 61, 31));
@@ -71,6 +77,7 @@ void SensorBox::init()
     sensor_id_reg_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     sensor_id_reg_text_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     sensor_id_reg_text_edit->setTabChangesFocus(true);
+
     sensor_value_reg_text_edit = new QTextEdit(this->sensor_box);
     sensor_value_reg_text_edit->setObjectName("sensor_value_reg_text_edit");
     sensor_value_reg_text_edit->setGeometry(QRect(140, 10, 81, 31));
@@ -78,9 +85,16 @@ void SensorBox::init()
     sensor_value_reg_text_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     sensor_value_reg_text_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     sensor_value_reg_text_edit->setTabChangesFocus(true);
+
+    sensor_remove_btn = new QPushButton(this->sensor_box);
+    sensor_remove_btn->setObjectName(("sensor_remove_btn_" + std::to_string(data.sensorID)).c_str());
+    sensor_remove_btn->setGeometry(QRect(270, 10, 31, 31));
+    sensor_remove_btn->setFont(font3);
+    sensor_remove_btn->setText("D");
+
     sensor_add_btn = new QPushButton(this->sensor_box);
     sensor_add_btn->setObjectName(("sensor_add_btn_" + std::to_string(data.sensorID)).c_str());
-    sensor_add_btn->setGeometry(QRect(280, 10, 61, 31));
+    sensor_add_btn->setGeometry(QRect(311, 10, 31, 31));
     sensor_add_btn->setFont(font3);
 
     this->retranslateUi();
@@ -95,12 +109,25 @@ void SensorBox::init()
         QObject::connect(sensor_value_reg_text_edit, &sensor_value_reg_text_edit->textChanged, this, onValueRegChanged)
     );
     m_connections.push_back(
-        QObject::connect(sensor_add_btn, &sensor_add_btn->clicked, this, onButtonClicked)
+        QObject::connect(sensor_add_btn, &sensor_add_btn->clicked, this, onAddButtonClicked)
+    );
+    m_connections.push_back(
+        QObject::connect(sensor_remove_btn, &sensor_remove_btn->clicked, this, onRemoveButtonClicked)
     );
 }
 
-void SensorBox::onButtonClicked()
+void SensorBox::onAddButtonClicked()
 {
+    emit save(data);
+    // TODO: data.lastID = data.sensorID;
+}
+
+void SensorBox::onRemoveButtonClicked()
+{
+    data.sensorID = 0;
+    data.idReg = 0;
+    data.valueReg = 0;
+
     emit save(data);
     // TODO: data.lastID = data.sensorID;
 }
@@ -236,6 +263,16 @@ void SensorBox::setY(int y)
     this->sensor_box->setGeometry(QRect(rect.x(), y, rect.width(), rect.height()));
 }
 
+uint16_t SensorBox::getID()
+{
+    return data.sensorID;
+}
+
+void SensorBox::setValue(const QString& value)
+{
+    this->sensor_value_label->setText(value);
+}
+
 void SensorBox::show()
 {
     sensor_box->show();
@@ -254,6 +291,7 @@ void SensorBox::disable()
     sensor_id_reg_text_edit->setDisabled(true);
     sensor_value_reg_text_edit->setDisabled(true);
     sensor_add_btn->setDisabled(true);
+    sensor_remove_btn->setDisabled(true);
 }
 
 void SensorBox::enable()
@@ -262,6 +300,7 @@ void SensorBox::enable()
     sensor_id_reg_text_edit->setDisabled(false);
     sensor_value_reg_text_edit->setDisabled(false);
     sensor_add_btn->setDisabled(false);
+    sensor_remove_btn->setDisabled(false);
 }
 
 unsigned SensorBox::height()

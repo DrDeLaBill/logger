@@ -81,3 +81,15 @@ uint32_t DeviceInfo::record_loaded::get(unsigned)
     return info.record_loaded;
 }
 
+uint16_t DeviceInfo::modbus1_value::ID;
+bool* DeviceInfo::modbus1_value::updated;
+void DeviceInfo::modbus1_value::set(uint32_t value, unsigned index)
+{
+    info.modbus1_value[index] = value;
+}
+
+uint32_t DeviceInfo::modbus1_value::get(unsigned index)
+{
+    return info.modbus1_value[index];
+}
+

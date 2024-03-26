@@ -9,6 +9,7 @@
 
 #include "mainwindow.h"
 #include "deviceinfo.h"
+#include "comservice.h"
 #include "devicerecord.h"
 #include "app_exception.h"
 #include "CodeStopwatch.h"
@@ -95,22 +96,26 @@ void USBWorker::proccess(const USBRequestType type, const QString& port)
 {
     USBCStatus status = USBC_RES_OK;
 
+    COMService comService;
+
     try {
+        comService.init(port.toStdString());
+
         switch (type) {
         case USB_REQUEST_LOAD_SETTINGS:
-            status = handlerSettings.load(port.toStdString());
+            status = handlerSettings.load(comService);
             break;
         case USB_REQUEST_SAVE_SETTINGS:
-            status = handlerSettings.save(port.toStdString());
+            status = handlerSettings.save(comService);
             break;
         case USB_REQUEST_LOAD_INFO:
-            status = handlerInfo.load(port.toStdString());
+            status = handlerInfo.load(comService);
             break;
         case USB_REQUEST_SAVE_INFO:
-            status = handlerInfo.save(port.toStdString());
+            status = handlerInfo.save(comService);
             break;
         case USB_REQUEST_LOAD_LOG:
-            status = loadLogProccess(port.toStdString());
+            status = loadLogProccess(comService);
             break;
         default:
             throw exceptions::UsbUndefinedBehaviourException();
@@ -131,10 +136,12 @@ void USBWorker::proccess(const USBRequestType type, const QString& port)
         status = USBC_INTERNAL_ERROR;
     }
 
+    comService.deinit();
+
     emit resultReady(type, status);
 }
 
-USBCStatus USBWorker::loadLogProccess(const std::string& port)
+USBCStatus USBWorker::loadLogProccess(const COMService& comService)
 {
     emit loadLogProgressUpdated(0);
 
@@ -143,24 +150,24 @@ USBCStatus USBWorker::loadLogProccess(const std::string& port)
 
     DeviceInfo::current_id::set(curLogId);
     DeviceInfo::current_id::updated[0] = true;
-    if (handlerInfo.save(port) != USBC_RES_DONE) {
-        while (handlerInfo.loadCharacteristic(port, DeviceInfo::current_id::ID) != USBC_RES_DONE);
+    if (handlerInfo.save(comService) != USBC_RES_DONE) {
+        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID) != USBC_RES_DONE);
     }
     DeviceInfo::record_loaded::set(0);
     DeviceInfo::record_loaded::updated[0] = true;
-    if (handlerInfo.save(port) != USBC_RES_DONE) {
-        while (handlerInfo.loadCharacteristic(port, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
+    if (handlerInfo.save(comService) != USBC_RES_DONE) {
+        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
     }
 
-    while (handlerInfo.load(port) != USBC_RES_DONE);
+    while (handlerInfo.load(comService) != USBC_RES_DONE);
 
     std::string dumpStr = "";
     while (curLogId <= DeviceInfo::max_id::get()) {
-        status = handlerInfo.loadCharacteristic(port, DeviceInfo::record_loaded::ID);
+        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID);
         if (status != USBC_RES_DONE) {
             continue;
         }
-        status = handlerInfo.loadCharacteristic(port, DeviceInfo::current_id::ID);
+        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID);
         if (status != USBC_RES_DONE) {
             continue;
         }
@@ -173,7 +180,7 @@ USBCStatus USBWorker::loadLogProccess(const std::string& port)
             curLogId = tmpId;
         }
 
-        status = handlerRecord.load(port);
+        status = handlerRecord.load(comService);
         if (status != USBC_RES_DONE) {
             throw exceptions::UsbReportException();
         }
@@ -193,9 +200,9 @@ USBCStatus USBWorker::loadLogProccess(const std::string& port)
         DeviceInfo::record_loaded::updated[0] = true;
         DeviceInfo::current_id::set(curLogId);
         DeviceInfo::current_id::updated[0] = true;
-        while (handlerInfo.save(port) != USBC_RES_DONE) {
-            while (handlerInfo.loadCharacteristic(port, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
-            while (handlerInfo.loadCharacteristic(port, DeviceInfo::current_id::ID) != USBC_RES_DONE);
+        while (handlerInfo.save(comService) != USBC_RES_DONE) {
+            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
+            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID) != USBC_RES_DONE);
         }
 
         curLogId++;

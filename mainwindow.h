@@ -71,8 +71,8 @@ private slots:
 
     void on_verticalScrollBar_valueChanged(int value);
 
-    void onInfoTimeout();
     void onSaveTimeout();
+    void onInfoTimeout();
 
     void onSaveSensor(const SensorData& sensorData);
 

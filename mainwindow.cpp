@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
     QObject::connect(&usbcontroller, &usbcontroller.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
 
     sensorListBox = new SensorList(ui->groupBox_2);
-    firstSensor   = new SensorBox(sensorListBox->sensors_group, {"add", 0, 0, 0, 0, 0});
+    firstSensor   = new SensorBox(sensorListBox->sensors_group, {"+", 0, 0, 0, 0, 0});
     QObject::connect(firstSensor, &firstSensor->save, this, onSaveSensor);
     firstSensor->show();
 
@@ -82,9 +82,6 @@ void MainWindow::setError(const QString& str)
     ui->statusbar->showMessage(str);
     ui->device_label->setText("Logger error");
     QMessageBox messageBox;
-    if (infoTimer) {
-        infoTimer->stop();
-    }
     messageBox.critical(0, "Error", str);
     messageBox.setFixedSize(500, 200);
     disableAll();
@@ -112,10 +109,6 @@ void MainWindow::on_updateTimeBtn_clicked()
     MainWindow::setLoading();
     usbcontroller.saveInfo(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_SAVE_INFO;
-
-    if (infoTimer) {
-        infoTimer->stop();
-    }
 }
 
 void MainWindow::on_updateBtn_clicked()
@@ -124,10 +117,6 @@ void MainWindow::on_updateBtn_clicked()
     MainWindow::setLoading();
     usbcontroller.loadSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_LOAD_SETTINGS;
-
-    if (infoTimer) {
-        infoTimer->stop();
-    }
 }
 
 void MainWindow::on_upgradeBtn_clicked()
@@ -140,10 +129,6 @@ void MainWindow::on_upgradeBtn_clicked()
     MainWindow::setLoading();
     usbcontroller.saveSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_SAVE_SETTINGS;
-
-    if (infoTimer) {
-        infoTimer->stop();
-    }
 }
 
 void MainWindow::on_dumpBtn_clicked()
@@ -151,10 +136,6 @@ void MainWindow::on_dumpBtn_clicked()
     MainWindow::setLoading();
     usbcontroller.loadLog(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_LOAD_LOG;
-
-    if (infoTimer) {
-        infoTimer->stop();
-    }
 }
 
 void MainWindow::onLoadLogProgressUpdated(uint32_t value)
@@ -184,6 +165,7 @@ void MainWindow::onInfoTimeout()
     if (saveTimer->isActive()) {
         return;
     }
+
     if (requestType == USB_REQUEST_NONE) {
         usbcontroller.loadInfo(ui->serialPortSelect->currentText());
         requestType = USB_REQUEST_LOAD_INFO;
@@ -272,7 +254,7 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
         break;
     }
 
-    if (infoTimer) {
+    if (!infoTimer->isActive()) {
         infoTimer->start(INFO_TIMEOUT_MS);
     }
 }
@@ -335,17 +317,6 @@ void MainWindow::updateCOMSelect()
     ui->serialPortSelect->addItem("none");
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         ui->serialPortSelect->addItem(info.portName());
-
-
-        // TODO: remove
-        // qDebug() << "Name : " << info.portName();
-        // qDebug() << "Description : " << info.description();
-        // qDebug() << "Manufacturer: " << info.manufacturer();
-
-        // QSerialPort serial;
-        // serial.setPort(info);
-        // if (serial.open(QIODevice::ReadWrite))
-        //     serial.close();
     }
 }
 
@@ -372,6 +343,15 @@ void MainWindow::showSettings(const USBRequestType type)
     ui->time->setText(strTime);
     ui->updateTimeBtn->blockSignals(false);
 
+    for (auto& sensor : sensors) {
+        uint16_t value = DeviceInfo::modbus1_value::get(sensor.getID() - 1);
+        if (value == std::numeric_limits<uint16_t>::max()) {
+            sensor.setValue("ERR");
+        } else {
+            sensor.setValue(std::to_string(value).c_str());
+        }
+    }
+
     if (type != USB_REQUEST_LOAD_SETTINGS) {
         return;
     }
@@ -379,8 +359,8 @@ void MainWindow::showSettings(const USBRequestType type)
     enableAll();
 
     ui->device_label->setText(std::string(
-        std::string("Logger") +
-        std::string("v0.") + // TODO: add version parameter
+        std::string("Logger v") +
+        std::string("0.") + // TODO: add version parameter
         std::to_string(DeviceSettings::fw_id{}.get()) +
         std::string(".") +
         std::to_string(DeviceSettings::sw_id{}.get())
@@ -397,27 +377,26 @@ void MainWindow::showSettings(const USBRequestType type)
     firstSensor->clear();
 
     clearSensors();
-    unsigned index = 0;
-    while (index < __arr_len(DeviceSettings::settings_t::modbus1_status)) {
-        index = DeviceSettings::getIndex(index);
+    for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::modbus1_status); i++) {
+        i = DeviceSettings::getIndex(i);
 
-        if (index >= __arr_len(DeviceSettings::settings_t::modbus1_status)) {
+        if (i >= __arr_len(DeviceSettings::settings_t::modbus1_status)) {
             break;
         }
+
+        uint16_t value = DeviceInfo::modbus1_value::get(i);
 
         sensors.push_back({
             sensorListBox->sensors_group,
             {
-                "save",
-                index + 1,
+                "U",
+                i + 1,
                 sensors.size() + 1,
-                DeviceSettings::modbus1_id_reg{}.get(index),
-                DeviceSettings::modbus1_value_reg{}.get(index),
-                0
+                DeviceSettings::modbus1_id_reg::get(i),
+                DeviceSettings::modbus1_value_reg::get(i),
+                value
             }
         });
-
-        index++;
     }
 
     for (auto& sensor : sensors) {
@@ -544,13 +523,9 @@ void QWidget::wheelEvent(QWheelEvent *event)
 
 void MainWindow::on_serialPortSelect_activated(int index)
 {
-    qDebug() << "Selected port: " << ui->serialPortSelect->itemText(index); // TODO: remove
-
-
+    ui->updateBtn->setDisabled(false);
     ui->updateBtn->click();
-
-
-    infoTimer->start(INFO_TIMEOUT_MS);
+    ui->updateBtn->setDisabled(true);
 }
 
 void MainWindow::on_updatePortsBtn_clicked()

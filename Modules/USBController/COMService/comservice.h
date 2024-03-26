@@ -22,6 +22,8 @@ private:
     std::unique_ptr<QSerialPort> port;
 
 public:
+    ~COMService();
+
     void init(const std::string& portName);
 
     void sendReport(const report_pack_t& report);

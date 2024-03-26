@@ -14,6 +14,7 @@
 #include "utils.h"
 
 #include "usbcstatus.h"
+#include "comservice.h"
 #include "COMController.h"
 #include "comtableworker.h"
 
@@ -68,7 +69,8 @@ private:
         COMTuple<uint32_t, DeviceInfo::max_id>,
         COMTuple<uint32_t, DeviceInfo::current_id>,
         COMTuple<uint32_t, DeviceInfo::current_count>,
-        COMTuple<uint8_t,  DeviceInfo::record_loaded>
+        COMTuple<uint8_t,  DeviceInfo::record_loaded>,
+        COMTuple<uint16_t, DeviceInfo::modbus1_value, __arr_len(DeviceInfo::info_t::modbus1_value)>
     >;
     using info_worker_t = COMTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
     static constexpr unsigned INFO_MAX_ID = info_worker_t::maxID();
@@ -85,7 +87,7 @@ private:
     static info_worker_t handlerInfo;
     static record_worker_t handlerRecord;
 
-    USBCStatus loadLogProccess(const std::string& port);
+    USBCStatus loadLogProccess(const COMService& comService);
 
 };
 

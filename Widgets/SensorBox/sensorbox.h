@@ -27,7 +27,8 @@ private slots:
     void onIdChanged();
     void onIdRegChanged();
     void onValueRegChanged();
-    void onButtonClicked();
+    void onAddButtonClicked();
+    void onRemoveButtonClicked();
 
 signals:
     void save(const SensorData& sensorData);
@@ -38,12 +39,13 @@ private:
     QWidget* parent;
     SensorData data;
 
-    QGroupBox *sensor_box;
+    QGroupBox   *sensor_box;
+    QPushButton *sensor_remove_btn;
     QPushButton *sensor_add_btn;
-    QLabel *sensor_value_label;
-    QTextEdit *sensor_id_reg_text_edit;
-    QTextEdit *sensor_value_reg_text_edit;
-    QTextEdit *sensor_id_text_edit;
+    QLabel      *sensor_value_label;
+    QTextEdit   *sensor_id_reg_text_edit;
+    QTextEdit   *sensor_value_reg_text_edit;
+    QTextEdit   *sensor_id_text_edit;
 
     void retranslateUi();
 
@@ -62,6 +64,10 @@ public:
 
     int getY();
     void setY(int y);
+
+    uint16_t getID();
+
+    void setValue(const QString& value);
 
     void show();
     void clear();

@@ -99,6 +99,19 @@ QPushButton {
 
 QPushButton::hover {
 	background-color: #424949;
+}
+
+QComboBox {
+	padding: 2px;
+	border: 1px solid #17202a;
+	border-radius: 2px;
+	background-color: #515a5a;
+	font-size: 10px;
+	color: #ccd1d1;
+}
+
+QComboBox::hover {
+	background-color: #424949;
 }</string>
    </property>
    <widget class="QWidget" name="horizontalLayoutWidget">
@@ -468,7 +481,7 @@ QPushButton::hover {
           <rect>
            <x>9</x>
            <y>-1</y>
-           <width>351</width>
+           <width>341</width>
            <height>44</height>
           </rect>
          </property>
