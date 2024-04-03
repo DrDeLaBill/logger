@@ -1,11 +1,11 @@
 #include "sensorlist.h"
 
 
-SensorList::SensorList(QWidget* parent)
+SensorList::SensorList(QWidget* parent, QString name)
 {
     sensors_group = new QGroupBox(parent);
-    sensors_group->setObjectName("sensors_group");
-    sensors_group->setGeometry(QRect(10, 90, 371, 311));
+    sensors_group->setObjectName("sensors_group_" + name);
+    sensors_group->setGeometry(QRect(10, 121, 371, 280));
     sensors_group->setStyleSheet(
         QString::fromUtf8(
             "QGroupBox {\n"
@@ -16,8 +16,8 @@ SensorList::SensorList(QWidget* parent)
     );
 
     verticalScrollBar = new QScrollBar(sensors_group);
-    verticalScrollBar->setObjectName("verticalScrollBar");
-    verticalScrollBar->setGeometry(QRect(350, 0, 20, 311));
+    verticalScrollBar->setObjectName("verticalScrollBar_" + name);
+    verticalScrollBar->setGeometry(QRect(350, 0, 20, sensors_group->height()));
     verticalScrollBar->setMaximum(100);
     verticalScrollBar->setSingleStep(15);
     verticalScrollBar->setPageStep(30);

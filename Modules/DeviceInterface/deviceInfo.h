@@ -15,8 +15,10 @@ public:
         uint32_t min_id;
         uint32_t max_id;
         uint32_t current_id;
-        uint32_t current_count;
+        uint64_t current_mbodbus1_count;
+        uint64_t current_1wire_count;
         uint8_t  record_loaded;
+        bool     need_registrate_1wire;
         // MODBUS 1 sensor register last values
         uint16_t modbus1_value[MODBUS_SENS_COUNT];
     } info_t;
@@ -29,50 +31,64 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
     struct min_id
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
     struct max_id
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
     struct current_id
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
-    struct current_count
+    struct current_mbodbus1_count
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
+    };
+    struct current_1wire_count
+    {
+        static uint16_t ID;
+        static bool* updated;
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
+    };
+    struct need_registrate_1wire
+    {
+        static uint16_t ID;
+        static bool* updated;
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
     struct record_loaded
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
-    struct modbus1_value
+    struct modbus1_last_value
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint32_t value, unsigned index = 0);
-        static uint32_t get(unsigned index = 0);
+        static void set(uint64_t value, unsigned index = 0);
+        static uint64_t get(unsigned index = 0);
     };
 };
 

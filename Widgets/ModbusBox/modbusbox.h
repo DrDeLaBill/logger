@@ -13,13 +13,13 @@
 #include <QTextEdit>
 #include <QPushButton>
 
-#include "sensordata.h"
+#include "modbusdata.h"
 
 
-#define SENSOR_BOX_HEIGHT (51)
+#define MODBUS_BOX_HEIGHT (51)
 
 
-class SensorBox: public QObject
+class ModbusBox: public QObject
 {
     Q_OBJECT
 
@@ -31,13 +31,13 @@ private slots:
     void onRemoveButtonClicked();
 
 signals:
-    void save(const SensorData& sensorData);
+    void save(const ModbusData& sensorData);
 
 private:
     std::vector<QMetaObject::Connection> m_connections;
 
     QWidget* parent;
-    SensorData data;
+    ModbusData data;
 
     QGroupBox   *sensor_box;
     QPushButton *sensor_remove_btn;
@@ -55,12 +55,12 @@ private:
     void textEditProccess(QTextEdit* edit, unsigned& lastVal);
 
 public:
-    SensorBox(const QWidget* parent, const SensorData& data);
+    ModbusBox(const QWidget* parent, const ModbusData& data);
 
-    SensorBox(const SensorBox& other);
-    SensorBox& operator=(const SensorBox& other);
+    ModbusBox(const ModbusBox& other);
+    ModbusBox& operator=(const ModbusBox& other);
 
-    ~SensorBox();
+    ~ModbusBox();
 
     int getY();
     void setY(int y);

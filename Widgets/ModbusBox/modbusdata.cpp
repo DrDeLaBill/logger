@@ -1,7 +1,7 @@
-#include "sensordata.h"
+#include "modbusdata.h"
 
 
-SensorData::SensorData(
+ModbusData::ModbusData(
     const std::string& buttonLabel,
     const unsigned sensorID,
     const unsigned number,
@@ -11,11 +11,11 @@ SensorData::SensorData(
     ):  buttonLabel(buttonLabel), sensorID(sensorID), lastID(sensorID), number(number),
     idReg(idReg), valueReg(valueReg), value(value) {}
 
-SensorData::SensorData(const SensorData &other):
-    SensorData(other.buttonLabel, other.sensorID, other.number, other.idReg, other.valueReg, other.value)
+ModbusData::ModbusData(const ModbusData &other):
+    ModbusData(other.buttonLabel, other.sensorID, other.number, other.idReg, other.valueReg, other.value)
 {}
 
-SensorData& SensorData::operator=(const SensorData& other)
+ModbusData& ModbusData::operator=(const ModbusData& other)
 {
     buttonLabel = other.buttonLabel;
     sensorID = other.sensorID;
@@ -27,4 +27,4 @@ SensorData& SensorData::operator=(const SensorData& other)
     return *this;
 }
 
-SensorData::~SensorData() {}
+ModbusData::~ModbusData() {}

@@ -5,7 +5,7 @@
 #include <string>
 
 
-struct SensorData
+struct ModbusData
 {
     std::string buttonLabel;
     unsigned sensorID;
@@ -15,7 +15,7 @@ struct SensorData
     unsigned valueReg;
     unsigned value;
 
-    SensorData(
+    ModbusData(
         const std::string& buttonLabel,
         const unsigned sensorID,
         const unsigned number,
@@ -23,9 +23,9 @@ struct SensorData
         const unsigned valueReg,
         const unsigned value
     );
-    SensorData(const SensorData& other);
-    SensorData& operator=(const SensorData& other);
-    ~SensorData();
+    ModbusData(const ModbusData& other);
+    ModbusData& operator=(const ModbusData& other);
+    ~ModbusData();
 };
 
 #endif

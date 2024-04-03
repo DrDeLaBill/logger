@@ -5,12 +5,12 @@ DeviceRecord::record_t DeviceRecord::record{};
 
 uint16_t DeviceRecord::rcrd_id::ID;
 bool* DeviceRecord::rcrd_id::updated;
-void DeviceRecord::rcrd_id::set(uint32_t value, unsigned)
+void DeviceRecord::rcrd_id::set(uint64_t value, unsigned)
 {
     record.id = value;
 }
 
-uint32_t DeviceRecord::rcrd_id::get(unsigned)
+uint64_t DeviceRecord::rcrd_id::get(unsigned)
 {
     return record.id;
 }
@@ -18,38 +18,64 @@ uint32_t DeviceRecord::rcrd_id::get(unsigned)
 
 uint16_t DeviceRecord::time::ID;
 bool* DeviceRecord::time::updated;
-void DeviceRecord::time::set(uint32_t value, unsigned)
+void DeviceRecord::time::set(uint64_t value, unsigned)
 {
     record.time = value;
 }
 
-uint32_t DeviceRecord::time::get(unsigned)
+uint64_t DeviceRecord::time::get(unsigned)
 {
     return record.time;
 }
 
 
-uint16_t DeviceRecord::snsr_id::ID;
-bool* DeviceRecord::snsr_id::updated;
-void DeviceRecord::snsr_id::set(uint32_t value, unsigned index)
+uint16_t DeviceRecord::MODBUS1_ID::ID;
+bool* DeviceRecord::MODBUS1_ID::updated;
+void DeviceRecord::MODBUS1_ID::set(uint64_t value, unsigned index)
 {
-    record.ID[index] = value;
+    record.mb1_sens[index].ID = value;
 }
 
-uint32_t DeviceRecord::snsr_id::get(unsigned index)
+uint64_t DeviceRecord::MODBUS1_ID::get(unsigned index)
 {
-    return record.ID[index];
+    return record.mb1_sens[index].ID;
 }
 
 
-uint16_t DeviceRecord::value::ID;
-bool* DeviceRecord::value::updated;
-void DeviceRecord::value::set(uint32_t value, unsigned index)
+uint16_t DeviceRecord::MODBUS1_value::ID;
+bool* DeviceRecord::MODBUS1_value::updated;
+void DeviceRecord::MODBUS1_value::set(uint64_t value, unsigned index)
 {
-    record.value[index] = value;
+    record.mb1_sens[index].value = value;
 }
 
-uint32_t DeviceRecord::value::get(unsigned index)
+uint64_t DeviceRecord::MODBUS1_value::get(unsigned index)
 {
-    return record.value[index];
+    return record.mb1_sens[index].value;
+}
+
+
+uint16_t DeviceRecord::_1WIRE_ADDR::ID;
+bool* DeviceRecord::_1WIRE_ADDR::updated;
+void DeviceRecord::_1WIRE_ADDR::set(uint64_t value, unsigned index)
+{
+    record.ow_sens[index].ADDR = value;
+}
+
+uint64_t DeviceRecord::_1WIRE_ADDR::get(unsigned index)
+{
+    return record.ow_sens[index].ADDR;
+}
+
+
+uint16_t DeviceRecord::_1WIRE_value::ID;
+bool* DeviceRecord::_1WIRE_value::updated;
+void DeviceRecord::_1WIRE_value::set(uint64_t value, unsigned index)
+{
+    record.ow_sens[index].value = value;
+}
+
+uint64_t DeviceRecord::_1WIRE_value::get(unsigned index)
+{
+    return record.ow_sens[index].value;
 }

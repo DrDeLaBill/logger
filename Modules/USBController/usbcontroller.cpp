@@ -185,13 +185,13 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
             throw exceptions::UsbReportException();
         }
 
-        for (uint8_t i = 0; i < DeviceInfo::current_count::get(); i++) {
+        for (uint8_t i = 0; i < DeviceInfo::current_mbodbus1_count::get(); i++) {
             if (i == 0) {
                 dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
             } else {
                 dumpStr += ",,";
             }
-            dumpStr += std::to_string(DeviceRecord::snsr_id::get(i)) + "," + std::to_string(DeviceRecord::value::get(i)) + ",\n";
+            dumpStr += std::to_string(DeviceRecord::MODBUS1_ID::get(i)) + "," + std::to_string(DeviceRecord::MODBUS1_value::get(i)) + ",\n";
         }
 
         emit loadLogProgressUpdated(curLogId);

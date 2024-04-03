@@ -1,6 +1,5 @@
-#include "sensorbox.h"
+#include "modbusbox.h"
 
-#include <iostream>
 #include <QCoreApplication>
 
 
@@ -8,9 +7,9 @@
 #define MARGIN_INT (5)
 
 
-SensorBox::SensorBox(const SensorBox &other): SensorBox(other.parent, other.data) {}
+ModbusBox::ModbusBox(const ModbusBox &other): ModbusBox(other.parent, other.data) {}
 
-SensorBox& SensorBox::operator=(const SensorBox& other)
+ModbusBox& ModbusBox::operator=(const ModbusBox& other)
 {
     destroy();
     parent = other.parent;
@@ -19,12 +18,12 @@ SensorBox& SensorBox::operator=(const SensorBox& other)
     return *this;
 }
 
-SensorBox::SensorBox(const QWidget* parent, const SensorData& data): parent(const_cast<QWidget*>(parent)), data(data)
+ModbusBox::ModbusBox(const QWidget* parent, const ModbusData& data): parent(const_cast<QWidget*>(parent)), data(data)
 {
     init();
 }
 
-SensorBox::~SensorBox()
+ModbusBox::~ModbusBox()
 {
     for (auto& connection : m_connections) {
         QObject::disconnect(connection);
@@ -32,12 +31,12 @@ SensorBox::~SensorBox()
     destroy();
 }
 
-void SensorBox::init()
+void ModbusBox::init()
 {
     this->sensor_box = new QGroupBox(parent);
     this->sensor_box->setObjectName(("sensor_box_" + std::to_string(data.sensorID)).c_str());
-    this->sensor_box->setGeometry(QRect(0, 0, 351, SENSOR_BOX_HEIGHT));
-    this->sensor_box->setGeometry(QRect(0, getY(), 351, SENSOR_BOX_HEIGHT));
+    this->sensor_box->setGeometry(QRect(0, 0, 351, MODBUS_BOX_HEIGHT));
+    this->sensor_box->setGeometry(QRect(0, getY(), 351, MODBUS_BOX_HEIGHT));
     this->sensor_box->setStyleSheet(
         QString::fromUtf8(
             "QGroupBox {\n"
@@ -116,13 +115,13 @@ void SensorBox::init()
     );
 }
 
-void SensorBox::onAddButtonClicked()
+void ModbusBox::onAddButtonClicked()
 {
     emit save(data);
     // TODO: data.lastID = data.sensorID;
 }
 
-void SensorBox::onRemoveButtonClicked()
+void ModbusBox::onRemoveButtonClicked()
 {
     data.sensorID = 0;
     data.idReg = 0;
@@ -132,7 +131,7 @@ void SensorBox::onRemoveButtonClicked()
     // TODO: data.lastID = data.sensorID;
 }
 
-void SensorBox::textEditProccess(QTextEdit* edit, unsigned& target)
+void ModbusBox::textEditProccess(QTextEdit* edit, unsigned& target)
 {
     if (!edit) {
         return;
@@ -150,25 +149,25 @@ void SensorBox::textEditProccess(QTextEdit* edit, unsigned& target)
     edit->setTextCursor(cursor);
 }
 
-void SensorBox::onIdChanged()
+void ModbusBox::onIdChanged()
 {
     QTextEdit* edit = sensor_box->findChild<QTextEdit*>("sensor_id_edit");
     textEditProccess(edit, data.sensorID);
 }
 
-void SensorBox::onIdRegChanged()
+void ModbusBox::onIdRegChanged()
 {
     QTextEdit* edit = sensor_box->findChild<QTextEdit*>("sensorid_id_reg_text_edit");
     textEditProccess(edit, data.idReg);
 }
 
-void SensorBox::onValueRegChanged()
+void ModbusBox::onValueRegChanged()
 {
     QTextEdit* edit = sensor_box->findChild<QTextEdit*>("sensor_value_reg_text_edit");
     textEditProccess(edit, data.valueReg);
 }
 
-void SensorBox::destroy()
+void ModbusBox::destroy()
 {
     if (sensor_add_btn) {
         sensor_add_btn->deleteLater();
@@ -195,7 +194,7 @@ void SensorBox::destroy()
     }
 }
 
-void SensorBox::retranslateUi()
+void ModbusBox::retranslateUi()
 {
     sensor_box->setTitle(QString());
     sensor_add_btn->setText(QCoreApplication::translate("MainWindow", data.buttonLabel.c_str(), nullptr));
@@ -252,58 +251,60 @@ void SensorBox::retranslateUi()
     );
 }
 
-int SensorBox::getY()
+int ModbusBox::getY()
 {
-    return SENSOR_BOX_HEIGHT * data.number;
+    return MODBUS_BOX_HEIGHT * data.number;
 }
 
-void SensorBox::setY(int y)
+void ModbusBox::setY(int y)
 {
     const QRect& rect = sensor_box->geometry();
     this->sensor_box->setGeometry(QRect(rect.x(), y, rect.width(), rect.height()));
 }
 
-uint16_t SensorBox::getID()
+uint16_t ModbusBox::getID()
 {
     return data.sensorID;
 }
 
-void SensorBox::setValue(const QString& value)
+void ModbusBox::setValue(const QString& value)
 {
     this->sensor_value_label->setText(value);
 }
 
-void SensorBox::show()
+void ModbusBox::show()
 {
     sensor_box->show();
 }
 
-void SensorBox::clear()
+void ModbusBox::clear()
 {
     sensor_id_text_edit->setText(std::to_string(data.lastID).c_str());
     sensor_id_reg_text_edit->setText("0");
     sensor_value_reg_text_edit->setText("0");
 }
 
-void SensorBox::disable()
+void ModbusBox::disable()
 {
     sensor_id_text_edit->setDisabled(true);
     sensor_id_reg_text_edit->setDisabled(true);
     sensor_value_reg_text_edit->setDisabled(true);
     sensor_add_btn->setDisabled(true);
     sensor_remove_btn->setDisabled(true);
+    sensor_value_label->setDisabled(true);
 }
 
-void SensorBox::enable()
+void ModbusBox::enable()
 {
     sensor_id_text_edit->setDisabled(false);
     sensor_id_reg_text_edit->setDisabled(false);
     sensor_value_reg_text_edit->setDisabled(false);
     sensor_add_btn->setDisabled(false);
     sensor_remove_btn->setDisabled(false);
+    sensor_value_label->setDisabled(false);
 }
 
-unsigned SensorBox::height()
+unsigned ModbusBox::height()
 {
     return sensor_box->height();
 }

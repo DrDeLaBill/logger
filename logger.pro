@@ -19,7 +19,8 @@ SOURCES += \
     $$files($$PWD/Modules/DeviceRecord/*.cpp, true) \
     $$files($$PWD/Modules/DeviceInterface/*.cpp, true) \
     $$files($$PWD/Widgets/SensorList/*.cpp, true) \
-    $$files($$PWD/Widgets/SensorBox/*.cpp, true) \
+    $$files($$PWD/Widgets/ModbusBox/*.cpp, true) \
+    $$files($$PWD/Widgets/OneWireBox/*.cpp, true) \
     main.cpp \
     mainwindow.cpp
 
@@ -33,8 +34,8 @@ HEADERS += \
     Modules/USBController/COMTable/COMTable.h \
     Modules/USBController/COMTable/COMTuple.h \
     Modules/USBController/COMTable/COMHash.h \
-    Widgets/SensorBox/sensordata.h \
-    Widgets/SensorBox/sensorbox.h \
+    $$files($$PWD/Widgets/ModbusBox/*.h, true) \
+    $$files($$PWD/Widgets/OneWireBox/*.h, true) \
     mainwindow.h
 
 FORMS += \
@@ -67,6 +68,7 @@ INCLUDEPATH += $$PWD/Modules/Utils/utils/Buffer
 INCLUDEPATH += $$PWD/Modules/Utils/utils/TypeList
 INCLUDEPATH += $$PWD/Modules/Utils/utils/HALDEFS
 INCLUDEPATH += $$PWD/Widgets/SensorList
-INCLUDEPATH += $$PWD/Widgets/SensorBox
+INCLUDEPATH += $$PWD/Widgets/ModbusBox
+INCLUDEPATH += $$PWD/Widgets/OneWireBox
 
 QMAKE_CXXFLAGS += -Og

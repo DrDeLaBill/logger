@@ -16,7 +16,7 @@ public:
     QGroupBox*  sensors_group;
     QScrollBar* verticalScrollBar;
 
-    SensorList(QWidget* parent);
+    SensorList(QWidget* parent, QString name);
     ~SensorList();
 
     bool isCursorInside();

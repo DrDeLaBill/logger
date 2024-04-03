@@ -30,10 +30,15 @@ USBRequestType MainWindow::requestType = USB_REQUEST_NONE;
 USBController MainWindow::usbcontroller;
 QTimer* MainWindow::saveTimer;
 QTimer* MainWindow::infoTimer;
-SensorList* MainWindow::sensorListBox;
-SensorBox* MainWindow::firstSensor;
-std::vector<SensorBox> MainWindow::sensors;
-std::vector<QMetaObject::Connection> MainWindow::m_sensorConnection;
+
+SensorList* MainWindow::modbus1ListBox;
+ModbusBox* MainWindow::firstmodbus1Sensor;
+std::vector<ModbusBox> MainWindow::modbus1Sensors;
+std::vector<QMetaObject::Connection> MainWindow::m_modbus1Connection;
+
+SensorList* MainWindow::onewireListBox;
+OneWireService* MainWindow::oneWireService;
+std::vector<OneWireBox> MainWindow::oneWireSensors;
 
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
@@ -44,10 +49,15 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
     QObject::connect(&usbcontroller, &usbcontroller.error, this, onUSBError);
     QObject::connect(&usbcontroller, &usbcontroller.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
 
-    sensorListBox = new SensorList(ui->groupBox_2);
-    firstSensor   = new SensorBox(sensorListBox->sensors_group, {"+", 0, 0, 0, 0, 0});
-    QObject::connect(firstSensor, &firstSensor->save, this, onSaveSensor);
-    firstSensor->show();
+    modbus1ListBox     = new SensorList(ui->groupBox_2, "MODBUS1");
+    firstmodbus1Sensor = new ModbusBox(modbus1ListBox->sensors_group, {"+", 0, 0, 0, 0, 0});
+    QObject::connect(firstmodbus1Sensor, &firstmodbus1Sensor->save, this, onSaveModbus1Sensor);
+    firstmodbus1Sensor->show();
+
+    onewireListBox = new SensorList(ui->groupBox_2, "ONEWIRE");
+    oneWireService = new OneWireService(onewireListBox->sensors_group);
+    QObject::connect(oneWireService, &oneWireService->registerClicked, this, onOneWireRegister);
+    oneWireService->show();
 
     infoTimer = new QTimer(this);
     QObject::connect(infoTimer, QTimer::timeout, this, MainWindow::onInfoTimeout);
@@ -56,13 +66,20 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
     QObject::connect(saveTimer, QTimer::timeout, this, MainWindow::onSaveTimeout);
 
     QObject::connect(
-        sensorListBox->verticalScrollBar,
-        &sensorListBox->verticalScrollBar->valueChanged,
+        modbus1ListBox->verticalScrollBar,
+        &modbus1ListBox->verticalScrollBar->valueChanged,
+        this,
+        on_verticalScrollBar_valueChanged
+    );
+    QObject::connect(
+        onewireListBox->verticalScrollBar,
+        &onewireListBox->verticalScrollBar->valueChanged,
         this,
         on_verticalScrollBar_valueChanged
     );
 
     ui->updatePortsBtn->click();
+    ui->modbus1Btn->click();
 }
 
 MainWindow::~MainWindow()
@@ -71,8 +88,11 @@ MainWindow::~MainWindow()
     saveTimer->deleteLater();
 
     clearSensors();
-    firstSensor->deleteLater();
-    delete sensorListBox;
+    firstmodbus1Sensor->deleteLater();
+    delete modbus1ListBox;
+
+    oneWireService->deleteLater();
+    delete onewireListBox;
 
     // QMainWindow::~QMainWindow(); // TODO
 }
@@ -272,10 +292,13 @@ void MainWindow::disableAll()
 
     infoTimer->stop();
 
-    if (firstSensor) {
-        firstSensor->disable();
+    if (firstmodbus1Sensor) {
+        firstmodbus1Sensor->disable();
     }
-    for (auto& sensor : sensors) {
+    for (auto& sensor : modbus1Sensors) {
+        sensor.disable();
+    }
+    for (auto& sensor : oneWireSensors) {
         sensor.disable();
     }
 }
@@ -291,24 +314,35 @@ void MainWindow::enableAll()
     ui->upgradeBtn->setDisabled(false);
     ui->updateTimeBtn->setDisabled(false);
 
-    if (firstSensor) {
-        firstSensor->enable();
+    if (firstmodbus1Sensor) {
+        firstmodbus1Sensor->enable();
     }
-    for (auto& sensor : sensors) {
+    for (auto& sensor : modbus1Sensors) {
+        sensor.enable();
+    }
+    for (auto& sensor : oneWireSensors) {
         sensor.enable();
     }
 }
 
 void MainWindow::updateScrollBar()
 {
-    sensorListBox->verticalScrollBar->blockSignals(true);
-    sensorListBox->verticalScrollBar->setMinimum(0);
-    sensorListBox->verticalScrollBar->setMaximum(
-        (sensors.size() + 1) * SENSOR_BOX_HEIGHT - sensorListBox->sensors_group->geometry().height()
+    modbus1ListBox->verticalScrollBar->blockSignals(true);
+    modbus1ListBox->verticalScrollBar->setMinimum(0);
+    modbus1ListBox->verticalScrollBar->setMaximum(
+        (modbus1Sensors.size() + 1) * MODBUS_BOX_HEIGHT - modbus1ListBox->sensors_group->geometry().height()
     );
-    sensorListBox->verticalScrollBar->blockSignals(false);
+    modbus1ListBox->verticalScrollBar->blockSignals(false);
+    modbus1ListBox->verticalScrollBar->setValue(0);
 
-    sensorListBox->verticalScrollBar->setValue(0);
+
+    onewireListBox->verticalScrollBar->blockSignals(true);
+    onewireListBox->verticalScrollBar->setMinimum(0);
+    onewireListBox->verticalScrollBar->setMaximum(
+        (oneWireSensors.size() + 1) * MODBUS_BOX_HEIGHT - onewireListBox->sensors_group->geometry().height()
+    );
+    onewireListBox->verticalScrollBar->blockSignals(false);
+    onewireListBox->verticalScrollBar->setValue(0);
 }
 
 void MainWindow::updateCOMSelect()
@@ -320,16 +354,62 @@ void MainWindow::updateCOMSelect()
     }
 }
 
+void MainWindow::setMODBUS1Hidden(bool state)
+{
+    QString style(
+        "QPushButton {"
+        "border-bottom: 0px;"
+        "border-top-left-radius: 0;"
+        "border-top-right-radius: 2px;"
+        "border-bottom-left-radius: 0;"
+        "border-bottom-right-radius: 0;"
+        "background-color: "
+    );
+    style += state ? "#515a5a; }" : "#424949; }";
+    ui->modbus1Btn->setStyleSheet(style);
+
+    if (state) {
+        ui->modbus1Header->hide();
+        modbus1ListBox->sensors_group->hide();
+        modbus1ListBox->verticalScrollBar->valueChanged(0);
+    } else {
+        ui->modbus1Header->show();
+        modbus1ListBox->sensors_group->show();
+    }
+}
+
+void MainWindow::setONEWIREHidden(bool state)
+{
+    QString style(
+        "QPushButton {"
+            "border-bottom: 0px;"
+            "border-top-left-radius: 0;"
+            "border-top-right-radius: 2px;"
+            "border-bottom-left-radius: 0;"
+            "border-bottom-right-radius: 0;"
+            "background-color: "
+    );
+    style += state ? "#515a5a; }" : "#424949; }";
+    ui->onewireBtn->setStyleSheet(style);
+
+    if (state) {
+        ui->onewireHeader->hide();
+        onewireListBox->sensors_group->hide();
+        onewireListBox->verticalScrollBar->valueChanged(0);
+    } else {
+        ui->onewireHeader->show();
+        onewireListBox->sensors_group->show();
+    }
+}
+
 void MainWindow::clearSensors()
 {
-    if (sensors.size() == 0) {
-        return;
-    }
-    for (auto connection : m_sensorConnection) {
+    for (auto connection : m_modbus1Connection) {
         QObject::disconnect(connection);
     }
-    m_sensorConnection.clear();
-    sensors.clear();
+    m_modbus1Connection.clear();
+    modbus1Sensors.clear();
+    oneWireSensors.clear();
 }
 
 void MainWindow::showSettings(const USBRequestType type)
@@ -343,8 +423,17 @@ void MainWindow::showSettings(const USBRequestType type)
     ui->time->setText(strTime);
     ui->updateTimeBtn->blockSignals(false);
 
-    for (auto& sensor : sensors) {
-        uint16_t value = DeviceInfo::modbus1_value::get(sensor.getID() - 1);
+    for (auto& sensor : modbus1Sensors) {
+        uint16_t value = DeviceInfo::modbus1_last_value::get(sensor.getID() - 1);
+        if (value == std::numeric_limits<uint16_t>::max()) {
+            sensor.setValue("ERR");
+        } else {
+            sensor.setValue(std::to_string(value).c_str());
+        }
+    }
+
+    for (auto& sensor : oneWireSensors) {
+        uint16_t value = std::numeric_limits<uint16_t>::max(); // DeviceInfo::_1wire_value::get(sensor.getIndex());
         if (value == std::numeric_limits<uint16_t>::max()) {
             sensor.setValue("ERR");
         } else {
@@ -374,24 +463,24 @@ void MainWindow::showSettings(const USBRequestType type)
     ui->send_period->setText(std::to_string(DeviceSettings::send_period{}.get()).c_str());
     ui->send_period->blockSignals(false);
 
-    firstSensor->clear();
+    firstmodbus1Sensor->clear();
 
     clearSensors();
     for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::modbus1_status); i++) {
-        i = DeviceSettings::getIndex(i);
+        i = DeviceSettings::getModbus1Index(i);
 
         if (i >= __arr_len(DeviceSettings::settings_t::modbus1_status)) {
             break;
         }
 
-        uint16_t value = DeviceInfo::modbus1_value::get(i);
+        uint16_t value = DeviceInfo::modbus1_last_value::get(i);
 
-        sensors.push_back({
-            sensorListBox->sensors_group,
+        modbus1Sensors.push_back({
+            modbus1ListBox->sensors_group,
             {
                 "U",
                 i + 1,
-                sensors.size() + 1,
+                static_cast<int>(modbus1Sensors.size()) + 1,
                 DeviceSettings::modbus1_id_reg::get(i),
                 DeviceSettings::modbus1_value_reg::get(i),
                 value
@@ -399,15 +488,43 @@ void MainWindow::showSettings(const USBRequestType type)
         });
     }
 
-    for (auto& sensor : sensors) {
-        m_sensorConnection.push_back(
-            QObject::connect(&sensor, &sensor.save, this, onSaveSensor)
+    for (auto& sensor : modbus1Sensors) {
+        m_modbus1Connection.push_back(
+            QObject::connect(&sensor, &sensor.save, this, onSaveModbus1Sensor)
         );
     }
 
-    sensorListBox->sensors_group->show();
-    for (unsigned i = 0; i < sensors.size(); i++) {
-        sensors.at(i).show();
+    if (!modbus1ListBox->sensors_group->isHidden()) {
+        modbus1ListBox->sensors_group->show();
+        for (unsigned i = 0; i < modbus1Sensors.size(); i++) {
+            modbus1Sensors.at(i).show();
+        }
+    }
+
+    for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::_1wire_address); i++) {
+        i = DeviceSettings::getOnewWireIndex(i);
+
+        if (i >= __arr_len(DeviceSettings::settings_t::_1wire_address)) {
+            break;
+        }
+
+        uint16_t value = std::numeric_limits<uint16_t>::max(); // DeviceInfo::_1wire_value::get(sensor.getIndex());
+
+        OneWireData data{};
+        data.number  = static_cast<int>(oneWireSensors.size()) + 1;
+        data.address = DeviceSettings::_1wire_address::get(i);
+        data.value   = value;
+        oneWireSensors.push_back({
+            onewireListBox->sensors_group,
+            data
+        });
+    }
+
+    if (!onewireListBox->sensors_group->isHidden()) {
+        onewireListBox->sensors_group->show();
+        for (unsigned i = 0; i < oneWireSensors.size(); i++) {
+            oneWireSensors.at(i).show();
+        }
     }
 
     updateScrollBar();
@@ -441,20 +558,35 @@ void MainWindow::resetLoading()
 
 void MainWindow::on_verticalScrollBar_valueChanged(int value)
 {
-    int delta = 0;
-    int result = firstSensor->getY() - value;
-    if (value < 0) {
-        delta = -result;
-        result = 0;
+    if (!modbus1ListBox->sensors_group->isHidden()) {
+        int delta = 0;
+        int result = firstmodbus1Sensor->getY() - value;
+        if (value < 0) {
+            delta = -result;
+            result = 0;
+        }
+        firstmodbus1Sensor->setY(result);
+        for (unsigned i = 0; i < modbus1Sensors.size(); i++) {
+            ModbusBox& tmp = modbus1Sensors.at(i);
+            tmp.setY(tmp.getY() - value + delta);
+        }
     }
-    firstSensor->setY(result);
-    for (unsigned i = 0; i < sensors.size(); i++) {
-        SensorBox& tmp = sensors.at(i);
-        tmp.setY(tmp.getY() - value + delta);
+    if (!onewireListBox->sensors_group->isHidden()) {
+        int delta = 0;
+        int result = -value;
+        if (value < 0) {
+            delta = -result;
+            result = 0;
+        }
+        oneWireService->setY(result);
+        for (unsigned i = 0; i < oneWireSensors.size(); i++) {
+            OneWireBox& tmp = oneWireSensors.at(i);
+            tmp.setY(tmp.getY() - value + delta);
+        }
     }
 }
 
-void MainWindow::onSaveSensor(const SensorData& sensorData)
+void MainWindow::onSaveModbus1Sensor(const ModbusData& sensorData)
 {
     unsigned index = sensorData.lastID;
     if (sensorData.lastID == 0) {
@@ -503,25 +635,75 @@ void MainWindow::onSaveSensor(const SensorData& sensorData)
     ui->upgradeBtn->click();
 }
 
-void QWidget::wheelEvent(QWheelEvent *event)
+void MainWindow::onOneWireRegister()
 {
-    if (!MainWindow::sensorListBox->isCursorInside()) {
-        return;
-    }
-    if (MainWindow::sensors.empty()) {
-        return;
-    }
-    if (MainWindow::sensors.back().getY() + MainWindow::sensors.back().height() < MainWindow::sensorListBox->sensors_group->height()) {
-        return;
-    }
-    if (event->angleDelta().y() > 0) {
-        MainWindow::sensorListBox->mouseWheelUp();
+    bool currState = DeviceInfo::need_registrate_1wire::get();
+    if (currState) {
+        oneWireService->stop();
+        DeviceInfo::need_registrate_1wire::set(0);
+        DeviceInfo::need_registrate_1wire::updated[0] = true;
+
+        MainWindow::resetLoading();
+        ui->updateBtn->click();
     } else {
-        MainWindow::sensorListBox->mouseWheelDown();
+        oneWireService->start();
+        DeviceInfo::need_registrate_1wire::set(1);
+        DeviceInfo::need_registrate_1wire::updated[0] = true;
+
+        saveTimer->start(SAVE_TIMEOUT_MS);
+        MainWindow::setLoading();
+        usbcontroller.saveInfo(ui->serialPortSelect->currentText());
+        requestType = USB_REQUEST_SAVE_INFO;
     }
 }
 
-void MainWindow::on_serialPortSelect_activated(int index)
+void QWidget::wheelEvent(QWheelEvent *event)
+{
+    if (MainWindow::modbus1ListBox->isCursorInside() &&
+        !MainWindow::modbus1ListBox->sensors_group->isHidden()
+    ) {
+        MainWindow::scrollModbus1(event->angleDelta().y());
+    }
+    if (MainWindow::onewireListBox->isCursorInside() &&
+        !MainWindow::onewireListBox->sensors_group->isHidden()
+    ) {
+        MainWindow::scrollOneWire(event->angleDelta().y());
+    }
+}
+
+void MainWindow::scrollModbus1(int value)
+{
+    if (MainWindow::modbus1Sensors.empty()) {
+        return;
+    }
+    int y = MainWindow::modbus1Sensors.back().getY() + MainWindow::modbus1Sensors.back().height();
+    if (!MainWindow::modbus1ListBox->sensors_group->isHidden() &&
+        y < MainWindow::modbus1ListBox->sensors_group->height()
+        ) {
+        return;
+    }
+    value > 0 ?
+    MainWindow::modbus1ListBox->mouseWheelUp() :
+    MainWindow::modbus1ListBox->mouseWheelDown();
+}
+
+void MainWindow::scrollOneWire(int value)
+{
+    if (MainWindow::oneWireSensors.empty()) {
+        return;
+    }
+    int y = MainWindow::oneWireSensors.back().getY() + MainWindow::oneWireSensors.back().height();
+    if (!MainWindow::onewireListBox->sensors_group->isHidden() &&
+        y < MainWindow::onewireListBox->sensors_group->height()
+        ) {
+        return;
+    }
+    value > 0 ?
+    MainWindow::onewireListBox->mouseWheelUp() :
+    MainWindow::onewireListBox->mouseWheelDown();
+}
+
+void MainWindow::on_serialPortSelect_activated(int)
 {
     ui->updateBtn->setDisabled(false);
     ui->updateBtn->click();
@@ -532,5 +714,19 @@ void MainWindow::on_updatePortsBtn_clicked()
 {
     updateCOMSelect();
     disableAll();
+}
+
+
+void MainWindow::on_modbus1Btn_clicked()
+{
+    setONEWIREHidden(true);
+    setMODBUS1Hidden(false);
+}
+
+
+void MainWindow::on_onewireBtn_clicked()
+{
+    setMODBUS1Hidden(true);
+    setONEWIREHidden(false);
 }
 
