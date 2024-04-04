@@ -41,6 +41,7 @@ public:
 
     ~OneWireBox();
 
+    int calculateY();
     int getY();
     void setY(int y);
 

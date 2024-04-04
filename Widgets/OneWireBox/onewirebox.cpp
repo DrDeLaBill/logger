@@ -51,8 +51,7 @@ void OneWireBox::init()
 {
     sensor_box = new QGroupBox(const_cast<QWidget*>(parent));
     sensor_box->setObjectName(("sensor_box_" + std::to_string(data.number)).c_str());
-    sensor_box->setGeometry(QRect(0, offset, 351, ONEWIRE_BOX_HEIGHT));
-    sensor_box->setGeometry(QRect(0, offset + getY(), 351, ONEWIRE_BOX_HEIGHT));
+    sensor_box->setGeometry(QRect(0, offset + calculateY(), 351, ONEWIRE_BOX_HEIGHT));
     sensor_box->setStyleSheet(
         QString::fromUtf8(
             "QGroupBox {\n"
@@ -102,9 +101,14 @@ void OneWireBox::destroy()
     sensor_box->deleteLater();
 }
 
-int OneWireBox::getY()
+int OneWireBox::calculateY()
 {
     return ONEWIRE_BOX_HEIGHT * data.number;
+}
+
+int OneWireBox::getY()
+{
+    return sensor_box->geometry().y();
 }
 
 void OneWireBox::setY(int y)

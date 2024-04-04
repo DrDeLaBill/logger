@@ -525,13 +525,9 @@ void MainWindow::showSettings(const USBRequestType type)
 
 void MainWindow::showOneWireSensors()
 {
-    int offset = 0;
-    if (!oneWireSensors.empty()) {
-        oneWireSensors.back().getY();
-    }
-
     oneWireSensors.clear();
 
+    int offset = oneWireService->getY();
     for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::_1wire_address); i++) {
         i = DeviceSettings::getOnewWireIndex(i);
 
@@ -612,7 +608,7 @@ void MainWindow::on_verticalScrollBar_valueChanged(int value)
         oneWireService->setY(result);
         for (unsigned i = 0; i < oneWireSensors.size(); i++) {
             OneWireBox& tmp = oneWireSensors.at(i);
-            tmp.setY(tmp.getY() - value + delta);
+            tmp.setY(tmp.calculateY() - value + delta);
         }
     }
 }
@@ -721,7 +717,7 @@ void MainWindow::scrollOneWire(int value)
     if (MainWindow::oneWireSensors.empty()) {
         return;
     }
-    int y = MainWindow::oneWireSensors.back().getY() + MainWindow::oneWireSensors.back().height();
+    int y = MainWindow::oneWireSensors.back().calculateY() + MainWindow::oneWireSensors.back().height();
     if (!MainWindow::onewireListBox->sensors_group->isHidden() &&
         y < MainWindow::onewireListBox->sensors_group->height()
         ) {
