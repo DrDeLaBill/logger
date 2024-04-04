@@ -25,19 +25,33 @@ extern "C" {
 
 #define COM_DELAY_MS           (25)
 
-#define COM_TABLE_BEDUG        (false)
+#define COM_TABLE_BEDUG        (1)
 
 
 static const char COM_TAG[] = "COM";
 
 
-typedef struct __attribute__((packed)) _report_pack_t {
+#ifdef __MINGW32__
+#   pragma pack(push, 1)
+#else
+TYPE_PACK(
+#endif
+typedef struct
+#ifndef __MINGW32__
+,
+#endif
+_report_pack_t {
 	uint8_t  flag;
     uint16_t characteristic_id;
     uint8_t  index;
     uint8_t  data[sizeof(uint64_t)];
     uint16_t crc;
 } report_pack_t;
+#ifdef __MINGW32__
+#   pragma pack(pop)
+#else
+    );
+#endif
 
 
 uint16_t com_get_crc(const report_pack_t* report);

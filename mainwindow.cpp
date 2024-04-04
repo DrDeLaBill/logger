@@ -80,6 +80,11 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 
     ui->updatePortsBtn->click();
     ui->modbus1Btn->click();
+
+#ifndef DEBUG
+    ui->progressBar->hide();
+    ui->speed->hide();
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -93,8 +98,6 @@ MainWindow::~MainWindow()
 
     oneWireService->deleteLater();
     delete onewireListBox;
-
-    // QMainWindow::~QMainWindow(); // TODO
 }
 
 void MainWindow::setError(const QString& str)
@@ -189,6 +192,10 @@ void MainWindow::onInfoTimeout()
     if (requestType == USB_REQUEST_NONE) {
         usbcontroller.loadInfo(ui->serialPortSelect->currentText());
         requestType = USB_REQUEST_LOAD_INFO;
+    }
+
+    if (DeviceInfo::need_registrate_1wire::get()) {
+        showOneWireSensors();
     }
 
     if (infoTimer) {
@@ -301,6 +308,8 @@ void MainWindow::disableAll()
     for (auto& sensor : oneWireSensors) {
         sensor.disable();
     }
+
+    oneWireService->disable();
 }
 
 void MainWindow::enableAll()
@@ -323,26 +332,30 @@ void MainWindow::enableAll()
     for (auto& sensor : oneWireSensors) {
         sensor.enable();
     }
+
+    oneWireService->enable();
 }
 
 void MainWindow::updateScrollBar()
 {
+    int value = modbus1ListBox->verticalScrollBar->value();
     modbus1ListBox->verticalScrollBar->blockSignals(true);
     modbus1ListBox->verticalScrollBar->setMinimum(0);
     modbus1ListBox->verticalScrollBar->setMaximum(
         (modbus1Sensors.size() + 1) * MODBUS_BOX_HEIGHT - modbus1ListBox->sensors_group->geometry().height()
     );
+    modbus1ListBox->verticalScrollBar->setValue(value);
     modbus1ListBox->verticalScrollBar->blockSignals(false);
-    modbus1ListBox->verticalScrollBar->setValue(0);
 
 
+    value = onewireListBox->verticalScrollBar->value();
     onewireListBox->verticalScrollBar->blockSignals(true);
     onewireListBox->verticalScrollBar->setMinimum(0);
     onewireListBox->verticalScrollBar->setMaximum(
-        (oneWireSensors.size() + 1) * MODBUS_BOX_HEIGHT - onewireListBox->sensors_group->geometry().height()
+        (oneWireSensors.size() + 1) * ONEWIRE_BOX_HEIGHT - onewireListBox->sensors_group->geometry().height()
     );
+    onewireListBox->verticalScrollBar->setValue(value);
     onewireListBox->verticalScrollBar->blockSignals(false);
-    onewireListBox->verticalScrollBar->setValue(0);
 }
 
 void MainWindow::updateCOMSelect()
@@ -433,12 +446,16 @@ void MainWindow::showSettings(const USBRequestType type)
     }
 
     for (auto& sensor : oneWireSensors) {
-        uint16_t value = std::numeric_limits<uint16_t>::max(); // DeviceInfo::_1wire_value::get(sensor.getIndex());
+        uint16_t value = DeviceInfo::_1wire_last_value::get(sensor.getNumber());
         if (value == std::numeric_limits<uint16_t>::max()) {
             sensor.setValue("ERR");
         } else {
             sensor.setValue(std::to_string(value).c_str());
         }
+    }
+
+    if (oneWireService->isRegistratinig() && !DeviceInfo::need_registrate_1wire::get()) {
+        oneWireService->stop();
     }
 
     if (type != USB_REQUEST_LOAD_SETTINGS) {
@@ -501,6 +518,20 @@ void MainWindow::showSettings(const USBRequestType type)
         }
     }
 
+    showOneWireSensors();
+
+    updateScrollBar();
+}
+
+void MainWindow::showOneWireSensors()
+{
+    int offset = 0;
+    if (!oneWireSensors.empty()) {
+        oneWireSensors.back().getY();
+    }
+
+    oneWireSensors.clear();
+
     for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::_1wire_address); i++) {
         i = DeviceSettings::getOnewWireIndex(i);
 
@@ -508,15 +539,14 @@ void MainWindow::showSettings(const USBRequestType type)
             break;
         }
 
-        uint16_t value = std::numeric_limits<uint16_t>::max(); // DeviceInfo::_1wire_value::get(sensor.getIndex());
-
         OneWireData data{};
         data.number  = static_cast<int>(oneWireSensors.size()) + 1;
         data.address = DeviceSettings::_1wire_address::get(i);
-        data.value   = value;
+        data.value   = DeviceInfo::_1wire_last_value::get(i);
         oneWireSensors.push_back({
             onewireListBox->sensors_group,
-            data
+            data,
+            offset
         });
     }
 
@@ -545,6 +575,7 @@ void MainWindow::on_send_period_textChanged()
 void MainWindow::setLoading()
 {
     ui->statusbar->showMessage("Loading...");
+    infoTimer->stop();
     // TODO: loading screen
     disableAll();
 }
@@ -637,13 +668,12 @@ void MainWindow::onSaveModbus1Sensor(const ModbusData& sensorData)
 
 void MainWindow::onOneWireRegister()
 {
-    bool currState = DeviceInfo::need_registrate_1wire::get();
-    if (currState) {
+    if (oneWireService->isRegistratinig()) {
         oneWireService->stop();
         DeviceInfo::need_registrate_1wire::set(0);
         DeviceInfo::need_registrate_1wire::updated[0] = true;
 
-        MainWindow::resetLoading();
+        saveTimer->stop();
         ui->updateBtn->click();
     } else {
         oneWireService->start();
@@ -651,10 +681,9 @@ void MainWindow::onOneWireRegister()
         DeviceInfo::need_registrate_1wire::updated[0] = true;
 
         saveTimer->start(SAVE_TIMEOUT_MS);
-        MainWindow::setLoading();
-        usbcontroller.saveInfo(ui->serialPortSelect->currentText());
-        requestType = USB_REQUEST_SAVE_INFO;
     }
+    usbcontroller.saveInfo(ui->serialPortSelect->currentText());
+    requestType = USB_REQUEST_SAVE_INFO;
 }
 
 void QWidget::wheelEvent(QWheelEvent *event)

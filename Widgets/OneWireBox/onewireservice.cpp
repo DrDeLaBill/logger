@@ -44,6 +44,16 @@ OneWireService::~OneWireService()
     registrate_box->deleteLater();
 }
 
+bool OneWireService::isRegistratinig()
+{
+    return registrating;
+}
+
+void OneWireService::registerBtnClick()
+{
+    registerBtn->click();
+}
+
 int OneWireService::getY()
 {
     return registrate_box->geometry().y();
@@ -63,11 +73,14 @@ void OneWireService::show()
 void OneWireService::disable()
 {
     registrate_box->setDisabled(true);
+    registerBtn->setDisabled(true);
+    stop();
 }
 
 void OneWireService::enable()
 {
     registrate_box->setDisabled(false);
+    registerBtn->setDisabled(false);
 }
 
 unsigned OneWireService::height()
@@ -78,9 +91,11 @@ unsigned OneWireService::height()
 void OneWireService::start()
 {
     registerBtn->setText("Stop registrating");
+    registrating = true;
 }
 
 void OneWireService::stop()
 {
     registerBtn->setText("Register 1WIRE sensors");
+    registrating = false;
 }

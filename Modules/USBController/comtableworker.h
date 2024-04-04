@@ -234,9 +234,9 @@ void COMTableWorker<Table, START_ID>::_upgrade_s::operator()(void) const
     report_pack_t report = {};
     report.characteristic_id = characteristic_id;
     report.index = index;
-    uint8_t data[sizeof(uint32_t)] = {};
+    uint8_t data[sizeof(report.data)] = {};
     com_table.getValue(characteristic_id, data, index);
-    com_report_set_data(&report, data, sizeof(uint32_t));
+    com_report_set_data(&report, data, sizeof(data));
 
     try {
         comService->sendReport(report);

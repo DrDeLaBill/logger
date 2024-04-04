@@ -16,6 +16,8 @@ class OneWireBox: public QObject
     Q_OBJECT
 
 private:
+    int offset;
+
     QWidget* parent;
     OneWireData data;
 
@@ -32,7 +34,7 @@ private:
     void destroy();
 
 public:
-    OneWireBox(const QWidget* parent, const OneWireData& data);
+    OneWireBox(const QWidget* parent, const OneWireData& data, const int offset = 0);
 
     OneWireBox(const OneWireBox& other);
     OneWireBox& operator=(const OneWireBox& other);
@@ -43,6 +45,8 @@ public:
     void setY(int y);
 
     void setValue(const QString& value);
+
+    uint8_t getNumber();
 
     void show();
     void clear();

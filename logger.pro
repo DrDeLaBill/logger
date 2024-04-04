@@ -72,3 +72,7 @@ INCLUDEPATH += $$PWD/Widgets/ModbusBox
 INCLUDEPATH += $$PWD/Widgets/OneWireBox
 
 QMAKE_CXXFLAGS += -Og
+
+debug  {
+    DEFINES += "DEBUG"
+}

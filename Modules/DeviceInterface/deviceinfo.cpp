@@ -1,5 +1,7 @@
 #include "deviceinfo.h"
 
+#include "devicesettings.h"
+
 
 DeviceInfo::info_t DeviceInfo::info;
 
@@ -111,11 +113,35 @@ uint16_t DeviceInfo::modbus1_last_value::ID;
 bool* DeviceInfo::modbus1_last_value::updated;
 void DeviceInfo::modbus1_last_value::set(uint64_t value, unsigned index)
 {
-    info.modbus1_value[index] = value;
+    info.modbus1_last_value[index] = value;
 }
 
 uint64_t DeviceInfo::modbus1_last_value::get(unsigned index)
 {
-    return info.modbus1_value[index];
+    return info.modbus1_last_value[index];
+}
+
+uint16_t DeviceInfo::_1wire_last_value::ID;
+bool* DeviceInfo::_1wire_last_value::updated;
+void DeviceInfo::_1wire_last_value::set(uint64_t value, unsigned index)
+{
+    info._1wire_last_value[index] = value;
+}
+
+uint64_t DeviceInfo::_1wire_last_value::get(unsigned index)
+{
+    return info._1wire_last_value[index];
+}
+
+uint16_t DeviceInfo::_1wire_registrate::ID;
+bool* DeviceInfo::_1wire_registrate::updated;
+void DeviceInfo::_1wire_registrate::set(uint64_t value, unsigned index)
+{
+    DeviceSettings::_1wire_address::set(value, index);
+}
+
+uint64_t DeviceInfo::_1wire_registrate::get(unsigned index)
+{
+    return DeviceSettings::_1wire_address::get(index);
 }
 

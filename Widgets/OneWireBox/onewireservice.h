@@ -27,6 +27,7 @@ private:
     QGroupBox*   registrate_box;
     QPushButton* registerBtn;
 
+    bool registrating;
 
 public:
     OneWireService(const QWidget* parent);
@@ -41,6 +42,10 @@ public:
 
     void start();
     void stop();
+
+    void registerBtnClick();
+
+    bool isRegistratinig();
 };
 
 #endif // ONEWIRESERVICE_H

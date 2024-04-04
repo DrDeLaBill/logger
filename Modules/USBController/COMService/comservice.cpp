@@ -3,6 +3,7 @@
 #include <memory>
 #include <cstdio>
 #include <cstdint>
+#include <iostream>
 
 #include <QString>
 
@@ -62,6 +63,9 @@ void COMService::sendReport(const report_pack_t& request)
     USBHReport::createReport(request);
 
     try {
+        // printPretty("Reports:\n");
+        // com_report_show(&(USBHReport::getReport()));
+
         const QByteArray requestArray(reinterpret_cast<char*>(&(USBHReport::getReport())), sizeof(report_pack_t));
         qint64 res = port->write(requestArray);
         if (res != sizeof(report_pack_t)) {
@@ -95,6 +99,8 @@ void COMService::sendReport(const report_pack_t& request)
         USBDReport::setReport(reportPack);
 
         port->clear();
+
+        // com_report_show(&(USBDReport::getReport()));
     } catch (...) {
         throw;
     }

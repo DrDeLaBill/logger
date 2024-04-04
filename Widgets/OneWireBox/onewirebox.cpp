@@ -13,18 +13,19 @@
 #define MARGIN_INT 5
 
 
-OneWireBox::OneWireBox(const QWidget* parent, const OneWireData& data):
-    parent(const_cast<QWidget*>(parent)), data(data)
+OneWireBox::OneWireBox(const QWidget* parent, const OneWireData& data, const int offset):
+    offset(offset), parent(const_cast<QWidget*>(parent)), data(data)
 {
     this->init();
     this->retranslateUi();
 }
 
-OneWireBox::OneWireBox(const OneWireBox& other): OneWireBox(other.parent, other.data) { }
+OneWireBox::OneWireBox(const OneWireBox& other): OneWireBox(other.parent, other.data, other.offset) { }
 
 OneWireBox& OneWireBox::operator=(const OneWireBox& other)
 {
     destroy();
+    offset = other.offset;
     parent = other.parent;
     data   = other.data;
     init();
@@ -50,8 +51,8 @@ void OneWireBox::init()
 {
     sensor_box = new QGroupBox(const_cast<QWidget*>(parent));
     sensor_box->setObjectName(("sensor_box_" + std::to_string(data.number)).c_str());
-    sensor_box->setGeometry(QRect(0, 0, 351, ONEWIRE_BOX_HEIGHT));
-    sensor_box->setGeometry(QRect(0, getY(), 351, ONEWIRE_BOX_HEIGHT));
+    sensor_box->setGeometry(QRect(0, offset, 351, ONEWIRE_BOX_HEIGHT));
+    sensor_box->setGeometry(QRect(0, offset + getY(), 351, ONEWIRE_BOX_HEIGHT));
     sensor_box->setStyleSheet(
         QString::fromUtf8(
             "QGroupBox {\n"
@@ -115,6 +116,11 @@ void OneWireBox::setY(int y)
 void OneWireBox::setValue(const QString& value)
 {
     this->sensor_value->setText(value);
+}
+
+uint8_t OneWireBox::getNumber()
+{
+    return data.number;
 }
 
 void OneWireBox::show()

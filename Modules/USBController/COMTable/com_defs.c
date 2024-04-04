@@ -6,6 +6,8 @@
 
 #ifdef USE_HAL_DRIVER
 #   include "usbd_cdc_if.h"
+#else
+#   include <stdio.h>
 #endif
 
 #include "log.h"
@@ -72,8 +74,9 @@ void com_report_show(const report_pack_t* report)
 
 void com_report_set_data(report_pack_t* report, const uint8_t* src_data, const unsigned size)
 {
-#if HID_TABLE_BEDUG
-    BEDUG_ASSERT(src_data, "Data must not be null"); // TODO: app and device (throw)
+#if COM_TABLE_BEDUG
+    BEDUG_ASSERT(src_data, "Data must not be null");
 #endif
+    memset(report->data, 0, sizeof(report->data));
     memcpy(report->data, src_data, __min(sizeof(report->data), size));
 }

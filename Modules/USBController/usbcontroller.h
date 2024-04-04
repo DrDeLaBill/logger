@@ -73,7 +73,9 @@ private:
         COMTuple<uint8_t,  DeviceInfo::current_1wire_count>,
         COMTuple<uint8_t,  DeviceInfo::need_registrate_1wire>,
         COMTuple<uint8_t,  DeviceInfo::record_loaded>,
-        COMTuple<uint16_t, DeviceInfo::modbus1_last_value, __arr_len(DeviceInfo::info_t::modbus1_value)>
+        COMTuple<uint16_t, DeviceInfo::modbus1_last_value, __arr_len(DeviceInfo::info_t::modbus1_last_value)>,
+        COMTuple<uint16_t, DeviceInfo::_1wire_last_value,  __arr_len(DeviceInfo::info_t::_1wire_last_value)>,
+        COMTuple<uint64_t, DeviceInfo::_1wire_registrate,  __arr_len(DeviceRecord::record_t::ow_sens)>
     >;
     using info_worker_t = COMTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
     static constexpr unsigned INFO_MAX_ID = info_worker_t::maxID();

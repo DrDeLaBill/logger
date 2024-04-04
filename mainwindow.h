@@ -49,6 +49,7 @@ private:
     QString port;
 
     void showSettings(const USBRequestType type);
+    void showOneWireSensors();
     void clearSettings();
     void clearSensors();
     void updateScrollBar();
