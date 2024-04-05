@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "utils.h"
+
 #include "onewireservice.h"
 
 
@@ -17,7 +19,6 @@ OneWireBox::OneWireBox(const QWidget* parent, const OneWireData& data, const int
     offset(offset), parent(const_cast<QWidget*>(parent)), data(data)
 {
     this->init();
-    this->retranslateUi();
 }
 
 OneWireBox::OneWireBox(const OneWireBox& other): OneWireBox(other.parent, other.data, other.offset) { }
@@ -40,11 +41,13 @@ OneWireBox::~OneWireBox()
 void OneWireBox::retranslateUi()
 {
     sensor_box->setTitle(QString());
-    sensor_number->setText(QCoreApplication::translate("MainWindow", std::to_string(data.number).c_str(), nullptr));
+    sensor_number->setText(std::to_string(data.number).c_str());
+    char address[20] = "";
+    snprintf(address, sizeof(address), "0x%08X%08X", (uint32_t)(data.address >> 32), (uint32_t)data.address);
+    sensor_address->setText(address);
     char value[20] = "";
-    snprintf(value, sizeof(value), "0x%08X%08X", (uint32_t)(data.address >> 32), (uint32_t)data.address);
-    sensor_address->setText(QCoreApplication::translate("MainWindow", value, nullptr));
-    sensor_value->setText(QCoreApplication::translate("MainWindow", std::to_string(data.value).c_str(), nullptr));
+    snprintf(value, sizeof(value), "%d.%d", data.value / 10, __abs(data.value % 10));
+    sensor_value->setText(value);
 }
 
 void OneWireBox::init()
@@ -89,6 +92,8 @@ void OneWireBox::init()
     horizontalLayout->addWidget(sensor_value);
     sensor_value->setMargin(MARGIN_INT);
     sensor_value->setText(std::to_string(data.value).c_str());
+
+    this->retranslateUi();
 }
 
 void OneWireBox::destroy()

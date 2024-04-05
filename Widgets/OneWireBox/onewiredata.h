@@ -9,7 +9,7 @@ struct OneWireData
 {
     unsigned number;
     uint64_t address;
-    unsigned value;
+    int      value;
 };
 
 

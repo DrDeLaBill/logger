@@ -137,7 +137,6 @@ void MainWindow::on_updateTimeBtn_clicked()
 void MainWindow::on_updateBtn_clicked()
 {
     clearSensors();
-    MainWindow::setLoading();
     usbcontroller.loadSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_LOAD_SETTINGS;
 }
@@ -445,17 +444,21 @@ void MainWindow::showSettings(const USBRequestType type)
         }
     }
 
-    for (auto& sensor : oneWireSensors) {
-        uint16_t value = DeviceInfo::_1wire_last_value::get(sensor.getNumber());
+    for (unsigned i = 0; i < oneWireSensors.size(); i++) {
+        uint16_t value = DeviceInfo::_1wire_last_value::get(i);
         if (value == std::numeric_limits<uint16_t>::max()) {
-            sensor.setValue("ERR");
+            oneWireSensors.at(i).setValue("ERR");
         } else {
-            sensor.setValue(std::to_string(value).c_str());
+            char value_str[20] = "";
+            snprintf(value_str, sizeof(value_str), "%d.%d", value / 10, __abs(value % 10));
+            oneWireSensors.at(i).setValue(value_str);
         }
     }
 
-    if (oneWireService->isRegistratinig() && !DeviceInfo::need_registrate_1wire::get()) {
-        oneWireService->stop();
+    if (oneWireService->isRegistratinig() != DeviceInfo::need_registrate_1wire::get()) {
+        DeviceInfo::need_registrate_1wire::get() ?
+            oneWireService->start() :
+            oneWireService->stop();
     }
 
     if (type != USB_REQUEST_LOAD_SETTINGS) {
