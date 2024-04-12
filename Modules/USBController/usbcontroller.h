@@ -85,7 +85,7 @@ private:
         COMTuple<uint32_t, DeviceRecord::time>,
         COMTuple<uint8_t,  DeviceRecord::MODBUS1_ID,    __arr_len(DeviceRecord::record_t::mb1_sens)>,
         COMTuple<uint16_t, DeviceRecord::MODBUS1_value, __arr_len(DeviceRecord::record_t::mb1_sens)>,
-        COMTuple<uint8_t,  DeviceRecord::_1WIRE_ADDR,   __arr_len(DeviceRecord::record_t::ow_sens)>,
+        COMTuple<uint64_t, DeviceRecord::_1WIRE_ADDR,   __arr_len(DeviceRecord::record_t::ow_sens)>,
         COMTuple<uint16_t, DeviceRecord::_1WIRE_value,  __arr_len(DeviceRecord::record_t::ow_sens)>
     >;
     using record_worker_t = COMTableWorker<table_record_t, INFO_MAX_ID + 1>;

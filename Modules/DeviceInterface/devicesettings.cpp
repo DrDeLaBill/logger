@@ -39,7 +39,7 @@ void DeviceSettings::clear()
 
 bool DeviceSettings::check()
 {
-    if (settings.dv_type != DV_TYPE) {
+    if (settings.dv_type != DEVICE_TYPE) {
         return false;
     }
     if (settings.sw_id != SW_VERSION) {

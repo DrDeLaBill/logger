@@ -171,6 +171,14 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
         if (status != USBC_RES_DONE) {
             continue;
         }
+        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_mbodbus1_count::ID);
+        if (status != USBC_RES_DONE) {
+            continue;
+        }
+        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_1wire_count::ID);
+        if (status != USBC_RES_DONE) {
+            continue;
+        }
 
         if (DeviceInfo::record_loaded::get() == 0) {
             continue;
@@ -185,13 +193,25 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
             throw exceptions::UsbReportException();
         }
 
+        unsigned counter=  0;
         for (uint8_t i = 0; i < DeviceInfo::current_mbodbus1_count::get(); i++) {
-            if (i == 0) {
+            if (counter == 0) {
                 dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
             } else {
                 dumpStr += ",,";
             }
             dumpStr += std::to_string(DeviceRecord::MODBUS1_ID::get(i)) + "," + std::to_string(DeviceRecord::MODBUS1_value::get(i)) + ",\n";
+            counter++;
+        }
+
+        for (uint8_t i = 0; i < DeviceInfo::current_1wire_count::get(); i++) {
+            if (counter == 0) {
+                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
+            } else {
+                dumpStr += ",,";
+            }
+            dumpStr += std::to_string(DeviceRecord::_1WIRE_ADDR::get(i)) + "," + std::to_string(DeviceRecord::_1WIRE_value::get(i)) + ",\n";
+            counter++;
         }
 
         emit loadLogProgressUpdated(curLogId);
@@ -200,7 +220,7 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
         DeviceInfo::record_loaded::updated[0] = true;
         DeviceInfo::current_id::set(curLogId);
         DeviceInfo::current_id::updated[0] = true;
-        while (handlerInfo.save(comService) != USBC_RES_DONE) {
+        if (handlerInfo.save(comService) != USBC_RES_DONE) {
             while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
             while (handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID) != USBC_RES_DONE);
         }
