@@ -111,24 +111,24 @@ uint64_t DeviceInfo::record_loaded::get(unsigned)
 
 uint16_t DeviceInfo::modbus1_last_value::ID;
 bool* DeviceInfo::modbus1_last_value::updated;
-void DeviceInfo::modbus1_last_value::set(uint64_t value, unsigned index)
+void DeviceInfo::modbus1_last_value::set(int16_t value, unsigned index)
 {
     info.modbus1_last_value[index] = value;
 }
 
-uint64_t DeviceInfo::modbus1_last_value::get(unsigned index)
+int16_t DeviceInfo::modbus1_last_value::get(unsigned index)
 {
     return info.modbus1_last_value[index];
 }
 
 uint16_t DeviceInfo::_1wire_last_value::ID;
 bool* DeviceInfo::_1wire_last_value::updated;
-void DeviceInfo::_1wire_last_value::set(uint64_t value, unsigned index)
+void DeviceInfo::_1wire_last_value::set(int16_t value, unsigned index)
 {
     info._1wire_last_value[index] = value;
 }
 
-uint64_t DeviceInfo::_1wire_last_value::get(unsigned index)
+int16_t DeviceInfo::_1wire_last_value::get(unsigned index)
 {
     return info._1wire_last_value[index];
 }

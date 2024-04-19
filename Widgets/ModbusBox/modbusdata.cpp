@@ -7,7 +7,7 @@ ModbusData::ModbusData(
     const unsigned number,
     const unsigned idReg,
     const unsigned valueReg,
-    const unsigned value
+    const int16_t  value
     ):  buttonLabel(buttonLabel), sensorID(sensorID), lastID(sensorID), number(number),
     idReg(idReg), valueReg(valueReg), value(value) {}
 

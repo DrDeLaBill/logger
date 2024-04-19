@@ -73,8 +73,8 @@ private:
         COMTuple<uint8_t,  DeviceInfo::current_1wire_count>,
         COMTuple<uint8_t,  DeviceInfo::need_registrate_1wire>,
         COMTuple<uint8_t,  DeviceInfo::record_loaded>,
-        COMTuple<uint16_t, DeviceInfo::modbus1_last_value, __arr_len(DeviceInfo::info_t::modbus1_last_value)>,
-        COMTuple<uint16_t, DeviceInfo::_1wire_last_value,  __arr_len(DeviceInfo::info_t::_1wire_last_value)>,
+        COMTuple<int16_t,  DeviceInfo::modbus1_last_value, __arr_len(DeviceInfo::info_t::modbus1_last_value)>,
+        COMTuple<int16_t,  DeviceInfo::_1wire_last_value,  __arr_len(DeviceInfo::info_t::_1wire_last_value)>,
         COMTuple<uint64_t, DeviceInfo::_1wire_registrate,  __arr_len(DeviceRecord::record_t::ow_sens)>
     >;
     using info_worker_t = COMTableWorker<table_info_t, SETTINGS_MAX_ID + 1>;
@@ -84,9 +84,9 @@ private:
         COMTuple<uint32_t, DeviceRecord::rcrd_id>,
         COMTuple<uint32_t, DeviceRecord::time>,
         COMTuple<uint8_t,  DeviceRecord::MODBUS1_ID,    __arr_len(DeviceRecord::record_t::mb1_sens)>,
-        COMTuple<uint16_t, DeviceRecord::MODBUS1_value, __arr_len(DeviceRecord::record_t::mb1_sens)>,
+        COMTuple<int16_t,  DeviceRecord::MODBUS1_value, __arr_len(DeviceRecord::record_t::mb1_sens)>,
         COMTuple<uint64_t, DeviceRecord::_1WIRE_ADDR,   __arr_len(DeviceRecord::record_t::ow_sens)>,
-        COMTuple<uint16_t, DeviceRecord::_1WIRE_value,  __arr_len(DeviceRecord::record_t::ow_sens)>
+        COMTuple<int16_t,  DeviceRecord::_1WIRE_value,  __arr_len(DeviceRecord::record_t::ow_sens)>
     >;
     using record_worker_t = COMTableWorker<table_record_t, INFO_MAX_ID + 1>;
 

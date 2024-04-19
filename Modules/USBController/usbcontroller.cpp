@@ -196,21 +196,21 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
         unsigned counter=  0;
         for (uint8_t i = 0; i < DeviceInfo::current_mbodbus1_count::get(); i++) {
             if (counter == 0) {
-                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
+                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + ";" + std::to_string(DeviceRecord::time::get()) + ";";
             } else {
-                dumpStr += ",,";
+                dumpStr += ";;";
             }
-            dumpStr += std::to_string(DeviceRecord::MODBUS1_ID::get(i)) + "," + std::to_string(DeviceRecord::MODBUS1_value::get(i)) + ",\n";
+            dumpStr += std::to_string(DeviceRecord::MODBUS1_ID::get(i)) + ";" + std::to_string(DeviceRecord::MODBUS1_value::get(i)) + ";\n";
             counter++;
         }
 
         for (uint8_t i = 0; i < DeviceInfo::current_1wire_count::get(); i++) {
             if (counter == 0) {
-                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + "," + std::to_string(DeviceRecord::time::get()) + ",";
+                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + ";" + std::to_string(DeviceRecord::time::get()) + ";";
             } else {
-                dumpStr += ",,";
+                dumpStr += ";;";
             }
-            dumpStr += std::to_string(DeviceRecord::_1WIRE_ADDR::get(i)) + "," + std::to_string(DeviceRecord::_1WIRE_value::get(i)) + ",\n";
+            dumpStr += std::to_string(DeviceRecord::_1WIRE_ADDR::get(i)) + ";" + std::to_string(DeviceRecord::_1WIRE_value::get(i)) + ";\n";
             counter++;
         }
 

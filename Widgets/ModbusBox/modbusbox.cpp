@@ -264,7 +264,7 @@ void ModbusBox::setY(int y)
 
 uint16_t ModbusBox::getID()
 {
-    return data.sensorID;
+    return data.lastID;
 }
 
 void ModbusBox::setValue(const QString& value)

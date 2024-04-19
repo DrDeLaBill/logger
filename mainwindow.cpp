@@ -436,8 +436,8 @@ void MainWindow::showSettings(const USBRequestType type)
     ui->updateTimeBtn->blockSignals(false);
 
     for (auto& sensor : modbus1Sensors) {
-        uint16_t value = DeviceInfo::modbus1_last_value::get(sensor.getID() - 1);
-        if (value == std::numeric_limits<uint16_t>::max()) {
+        int16_t value = DeviceInfo::modbus1_last_value::get(sensor.getID() - 1);
+        if (value == std::numeric_limits<int16_t>::max()) {
             sensor.setValue("ERR");
         } else {
             sensor.setValue(std::to_string(value).c_str());
@@ -445,8 +445,8 @@ void MainWindow::showSettings(const USBRequestType type)
     }
 
     for (unsigned i = 0; i < oneWireSensors.size(); i++) {
-        uint16_t value = DeviceInfo::_1wire_last_value::get(i);
-        if (value == std::numeric_limits<uint16_t>::max()) {
+        int16_t value = DeviceInfo::_1wire_last_value::get(i);
+        if (value == std::numeric_limits<int16_t>::max()) {
             oneWireSensors.at(i).setValue("ERR");
         } else {
             char value_str[20] = "";
@@ -493,14 +493,14 @@ void MainWindow::showSettings(const USBRequestType type)
             break;
         }
 
-        uint16_t value = DeviceInfo::modbus1_last_value::get(i);
+        int16_t value = DeviceInfo::modbus1_last_value::get(i);
 
         modbus1Sensors.push_back({
             modbus1ListBox->sensors_group,
             {
                 "U",
                 i + 1,
-                static_cast<int>(modbus1Sensors.size()) + 1,
+                static_cast<int>(modbus1Sensors.size()) + 1, // TODO: warn
                 DeviceSettings::modbus1_id_reg::get(i),
                 DeviceSettings::modbus1_value_reg::get(i),
                 value

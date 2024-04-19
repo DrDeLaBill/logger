@@ -20,9 +20,9 @@ public:
         uint8_t  record_loaded;
         bool     need_registrate_1wire;
         // MODBUS 1 sensor register last values
-        uint16_t modbus1_last_value[MODBUS_SENS_COUNT];
+        int16_t modbus1_last_value[MODBUS_SENS_COUNT];
         // 1WIRE sensor register last values
-        uint16_t _1wire_last_value[MODBUS_SENS_COUNT];
+        int16_t _1wire_last_value[MODBUS_SENS_COUNT];
     } info_t;
 
 protected:
@@ -89,15 +89,15 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(int16_t value, unsigned index = 0);
+        static int16_t get(unsigned index = 0);
     };
     struct _1wire_last_value
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(int16_t value, unsigned index = 0);
+        static int16_t get(unsigned index = 0);
     };
     struct _1wire_registrate
     {

@@ -12,7 +12,7 @@ struct DeviceRecord
 public:
     typedef struct __attribute__((packed)) _modbus_sensor_t {
         uint8_t  ID;
-        uint16_t value;
+        int16_t  value;
     } modbus_sensor_t;
 
     typedef struct __attribute__((packed)) __1wire_sensor_t {
@@ -35,29 +35,29 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct time
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(uint32_t value, unsigned index = 0);
+        static uint32_t get(unsigned index = 0);
     };
     struct MODBUS1_ID
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(uint8_t value, unsigned index = 0);
+        static uint8_t get(unsigned index = 0);
     };
     struct MODBUS1_value
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(int16_t value, unsigned index = 0);
+        static int16_t get(unsigned index = 0);
     };
     struct _1WIRE_ADDR
     {
@@ -70,8 +70,8 @@ public:
     {
         static uint16_t ID;
         static bool* updated;
-        static void set(uint64_t value, unsigned index = 0);
-        static uint64_t get(unsigned index = 0);
+        static void set(int16_t value, unsigned index = 0);
+        static int16_t get(unsigned index = 0);
     };
 };
 
