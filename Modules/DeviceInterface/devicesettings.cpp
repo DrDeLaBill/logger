@@ -183,3 +183,39 @@ uint64_t DeviceSettings::_1wire_address::get(unsigned index)
 {
     return settings._1wire_address[index];
 }
+
+
+uint16_t DeviceSettings::mb1_last_id::ID;
+bool* DeviceSettings::mb1_last_id::updated;
+void DeviceSettings::mb1_last_id::set(uint8_t value, unsigned)
+{
+    settings.mb1_last_id = value;
+}
+uint8_t DeviceSettings::mb1_last_id::get(unsigned)
+{
+    return settings.mb1_last_id;
+}
+
+
+uint16_t DeviceSettings::mb1_new_id::ID;
+bool* DeviceSettings::mb1_new_id::updated;
+void DeviceSettings::mb1_new_id::set(uint8_t value, unsigned)
+{
+    settings.mb1_new_id = value;
+}
+uint8_t DeviceSettings::mb1_new_id::get(unsigned)
+{
+    return settings.mb1_new_id;
+}
+
+
+uint16_t DeviceSettings::need_mb1_id_update::ID;
+bool* DeviceSettings::need_mb1_id_update::updated;
+void DeviceSettings::need_mb1_id_update::set(uint8_t value, unsigned)
+{
+    settings.need_mb1_id_update = value;
+}
+uint8_t DeviceSettings::need_mb1_id_update::get(unsigned)
+{
+    return settings.need_mb1_id_update;
+}

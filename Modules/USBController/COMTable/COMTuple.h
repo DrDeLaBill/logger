@@ -37,6 +37,9 @@ struct COMTuple : COMTupleBase
             throw new exceptions::TemplateErrorException();
         }
         callback_c::updated = new bool[LENGTH];
+        for (unsigned i = 0; i < LENGTH; i++) {
+            callback_c::updated[i] = false;
+        }
     }
 #endif
 

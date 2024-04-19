@@ -51,6 +51,11 @@ public:
 
         // Device time
         uint32_t time;
+
+        // Params for update MODBUS1 sensor ID
+        uint8_t  need_mb1_id_update;
+        uint8_t  mb1_last_id;
+        uint8_t  mb1_new_id;
     } settings_t;
 
 protected:
@@ -135,6 +140,27 @@ public:
         static bool* updated;
         static void set(uint64_t value, unsigned index = 0);
         static uint64_t get(unsigned index = 0);
+    };
+    struct mb1_last_id
+    {
+        static uint16_t ID;
+        static bool* updated;
+        static void set(uint8_t value, unsigned index = 0);
+        static uint8_t get(unsigned index = 0);
+    };
+    struct mb1_new_id
+    {
+        static uint16_t ID;
+        static bool* updated;
+        static void set(uint8_t value, unsigned index = 0);
+        static uint8_t get(unsigned index = 0);
+    };
+    struct need_mb1_id_update
+    {
+        static uint16_t ID;
+        static bool* updated;
+        static void set(uint8_t value, unsigned index = 0);
+        static uint8_t get(unsigned index = 0);
     };
 
     static unsigned getModbus1Index(const unsigned index = 0);

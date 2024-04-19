@@ -59,7 +59,10 @@ private:
         COMTuple<uint16_t, DeviceSettings::modbus1_status,    __arr_len(DeviceSettings::settings_t::modbus1_status)>,
         COMTuple<uint16_t, DeviceSettings::modbus1_value_reg, __arr_len(DeviceSettings::settings_t::modbus1_value_reg)>,
         COMTuple<uint16_t, DeviceSettings::modbus1_id_reg,    __arr_len(DeviceSettings::settings_t::modbus1_id_reg)>,
-        COMTuple<uint64_t, DeviceSettings::_1wire_address,    __arr_len(DeviceSettings::settings_t::_1wire_address)>
+        COMTuple<uint64_t, DeviceSettings::_1wire_address,    __arr_len(DeviceSettings::settings_t::_1wire_address)>,
+        COMTuple<uint8_t,  DeviceSettings::mb1_last_id>,
+        COMTuple<uint8_t,  DeviceSettings::mb1_new_id>,
+        COMTuple<uint8_t,  DeviceSettings::need_mb1_id_update>
     >;
     using settings_worker_t = COMTableWorker<table_settings_t, COM_FIRST_KEY>;
     static constexpr unsigned SETTINGS_MAX_ID = settings_worker_t::maxID();

@@ -636,12 +636,18 @@ void MainWindow::onSaveModbus1Sensor(const ModbusData& sensorData)
     }
 
     if (sensorData.lastID > 0 && sensorData.lastID != sensorData.sensorID) {
+        DeviceSettings::mb1_last_id::set(sensorData.lastID);
+        DeviceSettings::mb1_last_id::updated[0] = true;
+        DeviceSettings::mb1_new_id::set(sensorData.sensorID);
+        DeviceSettings::mb1_new_id::updated[0] = true;
+        DeviceSettings::need_mb1_id_update::set(1);
+        DeviceSettings::need_mb1_id_update::updated[0] = true;
+
+
         DeviceSettings::modbus1_status{}.set(SETTINGS_SENSOR_EMPTY, index);
         DeviceSettings::modbus1_status::updated[index] = true;
-
         DeviceSettings::modbus1_id_reg{}.set(0, index);
         DeviceSettings::modbus1_id_reg::updated[index] = true;
-
         DeviceSettings::modbus1_value_reg{}.set(0, index);
         DeviceSettings::modbus1_value_reg::updated[index] = true;
 
