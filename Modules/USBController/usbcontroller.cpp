@@ -158,11 +158,16 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
     if (handlerInfo.save(comService) != USBC_RES_DONE) {
         while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
     }
+    DeviceInfo::next_record::set(1);
+    DeviceInfo::next_record::updated[0] = true;
+    if (handlerInfo.save(comService) != USBC_RES_DONE) {
+        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::next_record::ID) != USBC_RES_DONE);
+    }
 
     while (handlerInfo.load(comService) != USBC_RES_DONE);
 
     std::string dumpStr = "";
-    while (curLogId <= DeviceInfo::max_id::get()) {
+    while (curLogId < DeviceInfo::max_id::get()) {
         status = handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID);
         if (status != USBC_RES_DONE) {
             continue;
@@ -214,18 +219,23 @@ USBCStatus USBWorker::loadLogProccess(const COMService& comService)
             counter++;
         }
 
-        emit loadLogProgressUpdated(curLogId);
 
         DeviceInfo::record_loaded::set(0);
         DeviceInfo::record_loaded::updated[0] = true;
-        DeviceInfo::current_id::set(curLogId);
-        DeviceInfo::current_id::updated[0] = true;
+        DeviceInfo::next_record::set(1);
+        DeviceInfo::next_record::updated[0] = true;
         if (handlerInfo.save(comService) != USBC_RES_DONE) {
             while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
-            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID) != USBC_RES_DONE);
+            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::next_record::ID) != USBC_RES_DONE);
         }
 
-        curLogId++;
+        curLogId = DeviceInfo::current_id::get();
+
+        emit loadLogProgressUpdated(curLogId);
+
+        if (curLogId >= DeviceInfo::max_id::get()) {
+            break;
+        }
     }
 
     std::ofstream dump;
