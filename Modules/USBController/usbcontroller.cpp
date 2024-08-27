@@ -5,20 +5,18 @@
 
 #include <cstdio>
 
-#include "log.h" // TODO
+#include "app.h"
+#include "glog.h"
+#include "settings.h"
 
 #include "mainwindow.h"
-#include "deviceinfo.h"
 #include "comservice.h"
-#include "devicerecord.h"
 #include "app_exception.h"
 #include "CodeStopwatch.h"
 
 
 USBRequestType USBController::requestType = USB_REQUEST_NONE;
-USBWorker::settings_worker_t USBWorker::handlerSettings;
-USBWorker::info_worker_t USBWorker::handlerInfo;
-USBWorker::record_worker_t USBWorker::handlerRecord;
+TableWorker USBWorker::tableWorker;
 
 
 USBController::USBController(): worker()
@@ -33,8 +31,6 @@ USBController::USBController(): worker()
     // Write characteristics
     // TODO ---...---
 
-    QObject::connect(&worker, &worker.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
-
     workerThread.start();
 }
 
@@ -47,31 +43,14 @@ USBController::~USBController()
 void USBController::loadSettings(const QString& port)
 {
     requestType = USB_REQUEST_LOAD_SETTINGS;
-    DeviceSettings::clear();
+    memset(reinterpret_cast<void*>(&settings), 0, sizeof(settings));
+    memset(reinterpret_cast<void*>(&app_info), 0, sizeof(app_info));
     emit request(requestType, port);
 }
 
 void USBController::saveSettings(const QString& port)
 {
     requestType = USB_REQUEST_SAVE_SETTINGS;
-    emit request(requestType, port);
-}
-
-void USBController::loadInfo(const QString& port)
-{
-    requestType = USB_REQUEST_LOAD_INFO;
-    emit request(requestType, port);
-}
-
-void USBController::saveInfo(const QString& port)
-{
-    requestType = USB_REQUEST_SAVE_INFO;
-    emit request(requestType, port);
-}
-
-void USBController::loadLog(const QString& port)
-{
-    requestType = USB_REQUEST_LOAD_LOG;
     emit request(requestType, port);
 }
 
@@ -87,35 +66,22 @@ void USBController::handleResults(const USBRequestType type, const USBCStatus st
     emit responseReady(type, status);
 }
 
-void USBController::onLoadLogProgressUpdated(uint32_t value)
-{
-    emit loadLogProgressUpdated(value);
-}
-
 void USBWorker::proccess(const USBRequestType type, const QString& port)
 {
     USBCStatus status = USBC_RES_OK;
 
-    COMService comService;
-
     try {
-        comService.init(port.toStdString());
+        if (!COMService::available()) {
+            COMService::deinit();
+            COMService::begin(port.toStdString());
+        }
 
         switch (type) {
         case USB_REQUEST_LOAD_SETTINGS:
-            status = handlerSettings.load(comService);
+            status = tableWorker.load();
             break;
         case USB_REQUEST_SAVE_SETTINGS:
-            status = handlerSettings.save(comService);
-            break;
-        case USB_REQUEST_LOAD_INFO:
-            status = handlerInfo.load(comService);
-            break;
-        case USB_REQUEST_SAVE_INFO:
-            status = handlerInfo.save(comService);
-            break;
-        case USB_REQUEST_LOAD_LOG:
-            status = loadLogProccess(comService);
+            status = tableWorker.save();
             break;
         default:
             throw exceptions::UsbUndefinedBehaviourException();
@@ -126,127 +92,21 @@ void USBWorker::proccess(const USBRequestType type, const QString& port)
         } else {
             status = USBC_INTERNAL_ERROR;
         }
+
+        COMService::deinit();
     } catch (const exceptions::ExceptionBase* exc) {
         if (exc->groupMessage() == exceptions::USBExceptionGroup().message) {
             status = USBC_RES_ERROR;
         } else {
             status = USBC_INTERNAL_ERROR;
         }
-    } catch (...) {
-        status = USBC_INTERNAL_ERROR;
-    }
 
-    comService.deinit();
+        COMService::deinit();
+    } catch (const std::exception* exc) {
+        status = USBC_INTERNAL_ERROR;
+
+        COMService::deinit();
+    }
 
     emit resultReady(type, status);
-}
-
-USBCStatus USBWorker::loadLogProccess(const COMService& comService)
-{
-    emit loadLogProgressUpdated(0);
-
-    uint32_t curLogId = 0;
-    USBCStatus status = USBC_RES_OK;
-
-    DeviceInfo::current_id::set(curLogId);
-    DeviceInfo::current_id::updated[0] = true;
-    if (handlerInfo.save(comService) != USBC_RES_DONE) {
-        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID) != USBC_RES_DONE);
-    }
-    DeviceInfo::record_loaded::set(0);
-    DeviceInfo::record_loaded::updated[0] = true;
-    if (handlerInfo.save(comService) != USBC_RES_DONE) {
-        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
-    }
-    DeviceInfo::next_record::set(1);
-    DeviceInfo::next_record::updated[0] = true;
-    if (handlerInfo.save(comService) != USBC_RES_DONE) {
-        while (handlerInfo.loadCharacteristic(comService, DeviceInfo::next_record::ID) != USBC_RES_DONE);
-    }
-
-    while (handlerInfo.load(comService) != USBC_RES_DONE);
-
-    std::string dumpStr = "";
-    while (curLogId < DeviceInfo::max_id::get()) {
-        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID);
-        if (status != USBC_RES_DONE) {
-            continue;
-        }
-        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_id::ID);
-        if (status != USBC_RES_DONE) {
-            continue;
-        }
-        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_mbodbus1_count::ID);
-        if (status != USBC_RES_DONE) {
-            continue;
-        }
-        status = handlerInfo.loadCharacteristic(comService, DeviceInfo::current_1wire_count::ID);
-        if (status != USBC_RES_DONE) {
-            continue;
-        }
-
-        if (DeviceInfo::record_loaded::get() == 0) {
-            continue;
-        }
-        uint32_t tmpId = DeviceInfo::current_id::get();
-        if (curLogId < tmpId) {
-            curLogId = tmpId;
-        }
-
-        status = handlerRecord.load(comService);
-        if (status != USBC_RES_DONE) {
-            throw exceptions::UsbReportException();
-        }
-
-        unsigned counter=  0;
-        for (uint8_t i = 0; i < DeviceInfo::current_mbodbus1_count::get(); i++) {
-            if (counter == 0) {
-                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + ";" + std::to_string(DeviceRecord::time::get()) + ";";
-            } else {
-                dumpStr += ";;";
-            }
-            dumpStr += std::to_string(DeviceRecord::MODBUS1_ID::get(i)) + ";" + std::to_string(DeviceRecord::MODBUS1_value::get(i)) + ";\n";
-            counter++;
-        }
-
-        for (uint8_t i = 0; i < DeviceInfo::current_1wire_count::get(); i++) {
-            if (counter == 0) {
-                dumpStr += std::to_string(DeviceRecord::rcrd_id::get()) + ";" + std::to_string(DeviceRecord::time::get()) + ";";
-            } else {
-                dumpStr += ";;";
-            }
-            dumpStr += std::to_string(DeviceRecord::_1WIRE_ADDR::get(i)) + ";" + std::to_string(DeviceRecord::_1WIRE_value::get(i)) + ";\n";
-            counter++;
-        }
-
-
-        DeviceInfo::record_loaded::set(0);
-        DeviceInfo::record_loaded::updated[0] = true;
-        DeviceInfo::next_record::set(1);
-        DeviceInfo::next_record::updated[0] = true;
-        if (handlerInfo.save(comService) != USBC_RES_DONE) {
-            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::record_loaded::ID) != USBC_RES_DONE);
-            while (handlerInfo.loadCharacteristic(comService, DeviceInfo::next_record::ID) != USBC_RES_DONE);
-        }
-
-        curLogId = DeviceInfo::current_id::get();
-
-        emit loadLogProgressUpdated(curLogId);
-
-        if (curLogId >= DeviceInfo::max_id::get()) {
-            break;
-        }
-    }
-
-    std::ofstream dump;
-    dump.open(
-        std::string("dump") +
-        std::to_string(getMillis()) +
-        std::string(".csv")
-    );
-    dump << "LOG ID,TIME,ID,VALUE,\n";
-    dump << dumpStr.c_str();
-    dump.close();
-
-    return USBC_RES_DONE;
 }

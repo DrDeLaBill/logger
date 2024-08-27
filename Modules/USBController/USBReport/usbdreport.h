@@ -4,17 +4,17 @@
 
 #include <cstdint>
 
-#include "com_defs.h"
+#include "greport.h"
 
 
 struct USBDReport
 {
 public:
-    static void setReport(const report_pack_t& report);
-    static report_pack_t& getReport();
+    static void setReport(const pack_t& report);
+    static pack_t& getReport();
 
 private:
-    static report_pack_t report;
+    static pack_t report;
 };
 
 #endif // USBREPORT_H

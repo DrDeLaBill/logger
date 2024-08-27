@@ -9,15 +9,14 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    $$files($$PWD/Modules/USBController/COMTable/*.c, true) \
+    $$files($$PWD/Modules/USBController/gprotocol/*.c, true) \
     $$files($$PWD/Modules/USBController/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Log/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Time/*.cpp, true) \
     $$files($$PWD/Modules/Utils/utils/Time/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Debug/*.c, true) \
     $$files($$PWD/Modules/Utils/utils/Utils/*.c, true) \
-    $$files($$PWD/Modules/DeviceRecord/*.cpp, true) \
-    $$files($$PWD/Modules/DeviceInterface/*.cpp, true) \
+    $$files($$PWD/Modules/settings/*.c, true) \
     $$files($$PWD/Widgets/SensorList/*.cpp, true) \
     $$files($$PWD/Widgets/ModbusBox/*.cpp, true) \
     $$files($$PWD/Widgets/OneWireBox/*.cpp, true) \
@@ -27,13 +26,14 @@ SOURCES += \
 HEADERS += \
     Modules/Exceptions/app_exception.h \
     Modules/USBController/COMService/comservice.h \
-    Modules/USBController/COMTable/COMController.h \
-    Modules/USBController/comtableworker.h \
+    Modules/USBController/gprotocol/gprotocol.h \
+    Modules/USBController/gprotocol/greport.h \
+    Modules/USBController/gprotocol/gtuple.h \
+    Modules/USBController/tableworker.h \
     Modules/USBController/usbcstatus.h \
     Modules/USBController/usbcontroller.h \
-    Modules/USBController/COMTable/COMTable.h \
-    Modules/USBController/COMTable/COMTuple.h \
-    Modules/USBController/COMTable/COMHash.h \
+    Modules/settings/settings.h \
+    Modules/settings/app.h \
     $$files($$PWD/Widgets/ModbusBox/*.h, true) \
     $$files($$PWD/Widgets/OneWireBox/*.h, true) \
     mainwindow.h
@@ -53,12 +53,12 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 # Custom includes
-INCLUDEPATH += $$PWD/Modules/DeviceInterface
 INCLUDEPATH += $$PWD/Modules/Exceptions
 INCLUDEPATH += $$PWD/Modules/USBController/COMService
-INCLUDEPATH += $$PWD/Modules/USBController/COMTable
+INCLUDEPATH += $$PWD/Modules/USBController/gprotocol
 INCLUDEPATH += $$PWD/Modules/USBController/USBReport
 INCLUDEPATH += $$PWD/Modules/USBController
+INCLUDEPATH += $$PWD/Modules/settings
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Log
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Time
 INCLUDEPATH += $$PWD/Modules/Utils/utils/Debug
@@ -71,7 +71,7 @@ INCLUDEPATH += $$PWD/Widgets/SensorList
 INCLUDEPATH += $$PWD/Widgets/ModbusBox
 INCLUDEPATH += $$PWD/Widgets/OneWireBox
 
-QMAKE_CXXFLAGS += -Og
+# QMAKE_CXXFLAGS += -Og
 
 debug  {
     DEFINES += "DEBUG"

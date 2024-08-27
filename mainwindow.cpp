@@ -12,11 +12,13 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 
-#include "log.h" // TODO: remove
+#include "app.h"
+#include "glog.h" // TODO: remove
+#include "settings.h"
 #include "hal_defs.h"
 
 #include "usbcontroller.h"
-#include "devicesettings.h"
+#include "app_exception.h"
 
 
 #define TIME_STRING_LEN      (25)
@@ -47,7 +49,6 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent)
 
     QObject::connect(&usbcontroller, &usbcontroller.responseReady, this, responseProccess);
     QObject::connect(&usbcontroller, &usbcontroller.error, this, onUSBError);
-    QObject::connect(&usbcontroller, &usbcontroller.loadLogProgressUpdated, this, onLoadLogProgressUpdated);
 
     modbus1ListBox     = new SensorList(ui->groupBox_2, "MODBUS1");
     firstmodbus1Sensor = new ModbusBox(modbus1ListBox->sensors_group, {"+", 0, 0, 0, 0, 0});
@@ -119,21 +120,6 @@ void MainWindow::setWarning(const QString& str)
     messageBox.setFixedSize(500, 200);
 }
 
-void MainWindow::on_updateTimeBtn_clicked()
-{
-    if (saveTimer->isActive()) {
-        return;
-    }
-
-    DeviceInfo::time{}.set(static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00));
-    DeviceInfo::time::updated[0] = true;
-
-    saveTimer->start(SAVE_TIMEOUT_MS);
-    MainWindow::setLoading();
-    usbcontroller.saveInfo(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_SAVE_INFO;
-}
-
 void MainWindow::on_updateBtn_clicked()
 {
     clearSensors();
@@ -147,39 +133,15 @@ void MainWindow::on_upgradeBtn_clicked()
         return;
     }
 
+    app_info.time = static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00);
+
+    settings.record_period = ui->record_period->toPlainText().toUInt();
+    settings.send_period = ui->send_period->toPlainText().toUInt();
+
     saveTimer->start(SAVE_TIMEOUT_MS);
     MainWindow::setLoading();
     usbcontroller.saveSettings(ui->serialPortSelect->currentText());
     requestType = USB_REQUEST_SAVE_SETTINGS;
-}
-
-void MainWindow::on_dumpBtn_clicked()
-{
-    MainWindow::setLoading();
-    usbcontroller.loadLog(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_LOAD_LOG;
-}
-
-void MainWindow::onLoadLogProgressUpdated(uint32_t value)
-{
-    static unsigned long long speedStart = 0;
-    static uint32_t startId = 0;
-    if (DeviceInfo::max_id::get() - DeviceInfo::min_id::get() == 0) {
-        return;
-    }
-    unsigned percent = 100 * value / (DeviceInfo::max_id::get() - DeviceInfo::min_id::get());
-    if (ui->progressBar->text().toStdString() == "0%") {
-        speedStart = getMillis();
-        startId = DeviceInfo::current_id::get();
-    }
-    unsigned long long factor = (unsigned long long)(value - startId) * 60000;
-    unsigned long long time = (getMillis() - speedStart) + 1;
-    if (ui->progressBar->text().toStdString() == "100%") {
-        ui->speed->setText((std::to_string(factor / time) + " records/min " + std::to_string(time / 1000) + " sec").c_str());
-    } else {
-        ui->speed->setText((std::to_string(factor / time) + " records/min").c_str());
-    }
-    ui->progressBar->setValue(percent);
 }
 
 void MainWindow::onInfoTimeout()
@@ -189,11 +151,11 @@ void MainWindow::onInfoTimeout()
     }
 
     if (requestType == USB_REQUEST_NONE) {
-        usbcontroller.loadInfo(ui->serialPortSelect->currentText());
-        requestType = USB_REQUEST_LOAD_INFO;
+        usbcontroller.loadSettings(ui->serialPortSelect->currentText());
+        requestType = USB_REQUEST_LOAD_SETTINGS;
     }
 
-    if (DeviceInfo::need_registrate_1wire::get()) {
+    if (app_info.need_registrate_1wire) {
         showOneWireSensors();
     }
 
@@ -249,7 +211,7 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
 
     MainWindow::resetLoading();
 
-    if (!DeviceSettings::check()) {
+    if (!settings_check(&settings)) {
 #if defined(QT_NO_DEBUG)
         MainWindow::setError(exceptions::USBExceptionGroup().message);
 #else
@@ -260,16 +222,12 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
 
     switch (type) {
     case USB_REQUEST_LOAD_SETTINGS:
-    case USB_REQUEST_LOAD_INFO:
         showSettings(type);
         saveTimer->stop();
         break;
     case USB_REQUEST_SAVE_SETTINGS:
-    case USB_REQUEST_SAVE_INFO:
         ui->updateBtn->setDisabled(false);
         ui->updateBtn->click();
-        break;
-    case USB_REQUEST_LOAD_LOG:
         break;
     default:
 #if defined(QT_NO_DEBUG)
@@ -291,10 +249,8 @@ void MainWindow::disableAll()
     ui->record_period->setDisabled(true);
     ui->send_period->setDisabled(true);
 
-    ui->dumpBtn->setDisabled(true);
     ui->updateBtn->setDisabled(true);
     ui->upgradeBtn->setDisabled(true);
-    ui->updateTimeBtn->setDisabled(true);
 
     infoTimer->stop();
 
@@ -317,10 +273,8 @@ void MainWindow::enableAll()
     ui->record_period->setDisabled(false);
     ui->send_period->setDisabled(false);
 
-    ui->dumpBtn->setDisabled(false);
     ui->updateBtn->setDisabled(false);
     ui->upgradeBtn->setDisabled(false);
-    ui->updateTimeBtn->setDisabled(false);
 
     if (firstmodbus1Sensor) {
         firstmodbus1Sensor->enable();
@@ -426,17 +380,19 @@ void MainWindow::clearSensors()
 
 void MainWindow::showSettings(const USBRequestType type)
 {
-    std::time_t tick = (std::time_t)(TIMESTAMP2000_01_01_00_00_00 + static_cast<uint64_t>(DeviceInfo::time{}.get()));
+    static settings_t hashSettings = {};
+
+    std::time_t tick = (std::time_t)(TIMESTAMP2000_01_01_00_00_00 + static_cast<uint64_t>(app_info.time));
     struct tm tm;
     char strTime[TIME_STRING_LEN] = {};
     tm = *(std::localtime(&tick));
     std::strftime(strTime, sizeof(strTime), "%Y-%m-%d %H:%M:%S", &tm);
-    ui->updateTimeBtn->blockSignals(true);
-    ui->time->setText(strTime);
-    ui->updateTimeBtn->blockSignals(false);
+    if (ui->time->text() != QString(strTime)) {
+        ui->time->setText(strTime);
+    }
 
     for (auto& sensor : modbus1Sensors) {
-        int16_t value = DeviceInfo::modbus1_last_value::get(sensor.getID() - 1);
+        int16_t value = app_info.modbus1_last_value[sensor.getID() - 1];
         if (value == std::numeric_limits<int16_t>::max()) {
             sensor.setValue("ERR");
         } else {
@@ -445,7 +401,7 @@ void MainWindow::showSettings(const USBRequestType type)
     }
 
     for (unsigned i = 0; i < oneWireSensors.size(); i++) {
-        int16_t value = DeviceInfo::_1wire_last_value::get(i);
+        int16_t value = app_info._1wire_last_value[i];
         if (value == std::numeric_limits<int16_t>::max()) {
             oneWireSensors.at(i).setValue("ERR");
         } else {
@@ -455,8 +411,8 @@ void MainWindow::showSettings(const USBRequestType type)
         }
     }
 
-    if (oneWireService->isRegistratinig() != DeviceInfo::need_registrate_1wire::get()) {
-        DeviceInfo::need_registrate_1wire::get() ?
+    if (oneWireService->isRegistratinig() != app_info.need_registrate_1wire) {
+        app_info.need_registrate_1wire ?
             oneWireService->start() :
             oneWireService->stop();
     }
@@ -465,35 +421,43 @@ void MainWindow::showSettings(const USBRequestType type)
         return;
     }
 
+    if (util_hash((uint8_t*)&hashSettings, sizeof(hashSettings)) ==
+        util_hash((uint8_t*)&settings, sizeof(hashSettings))
+    ) {
+        return;
+    }
+
+    memcpy((uint8_t*)&hashSettings, (uint8_t*)&settings, sizeof(settings));
+
     enableAll();
 
     ui->device_label->setText(std::string(
         std::string("Logger v") +
         std::string("0.") + // TODO: add version parameter
-        std::to_string(DeviceSettings::fw_id{}.get()) +
+        std::to_string(settings.fw_id) +
         std::string(".") +
-        std::to_string(DeviceSettings::sw_id{}.get())
+        std::to_string(settings.sw_id)
     ).c_str());
 
     ui->record_period->blockSignals(true);
-    ui->record_period->setText(std::to_string(DeviceSettings::record_period{}.get()).c_str());
+    ui->record_period->setText(std::to_string(settings.record_period).c_str());
     ui->record_period->blockSignals(false);
 
     ui->send_period->blockSignals(true);
-    ui->send_period->setText(std::to_string(DeviceSettings::send_period{}.get()).c_str());
+    ui->send_period->setText(std::to_string(settings.send_period).c_str());
     ui->send_period->blockSignals(false);
 
     firstmodbus1Sensor->clear();
 
     clearSensors();
-    for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::modbus1_status); i++) {
-        i = DeviceSettings::getModbus1Index(i);
+    for (unsigned  i = 0; i < __arr_len(settings.modbus1_status); i++) {
+        i = modbus1_index(i);
 
-        if (i >= __arr_len(DeviceSettings::settings_t::modbus1_status)) {
+        if (i >= __arr_len(settings.modbus1_status)) {
             break;
         }
 
-        int16_t value = DeviceInfo::modbus1_last_value::get(i);
+        int16_t value = app_info.modbus1_last_value[i];
 
         modbus1Sensors.push_back({
             modbus1ListBox->sensors_group,
@@ -501,8 +465,8 @@ void MainWindow::showSettings(const USBRequestType type)
                 "U",
                 i + 1,
                 static_cast<int>(modbus1Sensors.size()) + 1, // TODO: warn
-                DeviceSettings::modbus1_id_reg::get(i),
-                DeviceSettings::modbus1_value_reg::get(i),
+                settings.modbus1_id_reg[i],
+                settings.modbus1_value_reg[i],
                 value
             }
         });
@@ -531,17 +495,17 @@ void MainWindow::showOneWireSensors()
     oneWireSensors.clear();
 
     int offset = oneWireService->getY();
-    for (unsigned  i = 0; i < __arr_len(DeviceSettings::settings_t::_1wire_address); i++) {
-        i = DeviceSettings::getOnewWireIndex(i);
+    for (unsigned  i = 0; i < __arr_len(settings._1wire_address); i++) {
+        i = _1wire_index(i);
 
-        if (i >= __arr_len(DeviceSettings::settings_t::_1wire_address)) {
+        if (i >= __arr_len(settings._1wire_address)) {
             break;
         }
 
         OneWireData data{};
         data.number  = static_cast<int>(oneWireSensors.size()) + 1;
-        data.address = DeviceSettings::_1wire_address::get(i);
-        data.value   = DeviceInfo::_1wire_last_value::get(i);
+        data.address = settings._1wire_address[i];
+        data.value   = app_info._1wire_last_value[i];
         oneWireSensors.push_back({
             onewireListBox->sensors_group,
             data,
@@ -557,18 +521,6 @@ void MainWindow::showOneWireSensors()
     }
 
     updateScrollBar();
-}
-
-void MainWindow::on_record_period_textChanged()
-{
-    DeviceSettings::record_period{}.set(ui->record_period->toPlainText().toUInt());
-    DeviceSettings::record_period::updated[0] = true;
-}
-
-void MainWindow::on_send_period_textChanged()
-{
-    DeviceSettings::send_period{}.set(ui->send_period->toPlainText().toUInt());
-    DeviceSettings::send_period::updated[0] = true;
 }
 
 void MainWindow::setLoading()
@@ -629,27 +581,21 @@ void MainWindow::onSaveModbus1Sensor(const ModbusData& sensorData)
     index--;
 
     if (sensorData.lastID == 0 &&
-        DeviceSettings::modbus1_status{}.get(index) != SETTINGS_SENSOR_EMPTY
+        settings.modbus1_status[index] != SETTINGS_SENSOR_EMPTY
     ) {
         MainWindow::setWarning("The sensor ID is already busy");
         return;
     }
 
     if (sensorData.lastID > 0 && sensorData.lastID != sensorData.sensorID) {
-        DeviceSettings::mb1_last_id::set(sensorData.lastID);
-        DeviceSettings::mb1_last_id::updated[0] = true;
-        DeviceSettings::mb1_new_id::set(sensorData.sensorID);
-        DeviceSettings::mb1_new_id::updated[0] = true;
-        DeviceSettings::need_mb1_id_update::set(1);
-        DeviceSettings::need_mb1_id_update::updated[0] = true;
+        app_info.mb1_last_id = sensorData.lastID;
+        app_info.mb1_new_id = sensorData.sensorID;
+        app_info.need_mb1_id_update = 1;
 
 
-        DeviceSettings::modbus1_status{}.set(SETTINGS_SENSOR_EMPTY, index);
-        DeviceSettings::modbus1_status::updated[index] = true;
-        DeviceSettings::modbus1_id_reg{}.set(0, index);
-        DeviceSettings::modbus1_id_reg::updated[index] = true;
-        DeviceSettings::modbus1_value_reg{}.set(0, index);
-        DeviceSettings::modbus1_value_reg::updated[index] = true;
+        settings.modbus1_status[index] = SETTINGS_SENSOR_EMPTY;
+        settings.modbus1_id_reg[index] = 0;
+        settings.modbus1_value_reg[index] = 0;
 
         index = sensorData.sensorID;
         if (index == 0) {
@@ -659,14 +605,9 @@ void MainWindow::onSaveModbus1Sensor(const ModbusData& sensorData)
         index--;
     }
 
-    DeviceSettings::modbus1_status{}.set(SETTINGS_SENSOR_THERMAL, index); // TODO: select
-    DeviceSettings::modbus1_status::updated[index] = true;
-
-    DeviceSettings::modbus1_id_reg{}.set(sensorData.idReg, index);
-    DeviceSettings::modbus1_id_reg::updated[index] = true;
-
-    DeviceSettings::modbus1_value_reg{}.set(sensorData.valueReg, index);
-    DeviceSettings::modbus1_value_reg::updated[index] = true;
+    settings.modbus1_status[index] = SETTINGS_SENSOR_THERMAL; // TODO: select
+    settings.modbus1_id_reg[index] = sensorData.idReg;
+    settings.modbus1_value_reg[index] = sensorData.valueReg;
 
     ui->upgradeBtn->click();
 }
@@ -675,20 +616,18 @@ void MainWindow::onOneWireRegister()
 {
     if (oneWireService->isRegistratinig()) {
         oneWireService->stop();
-        DeviceInfo::need_registrate_1wire::set(0);
-        DeviceInfo::need_registrate_1wire::updated[0] = true;
+        app_info.need_registrate_1wire = 0;
 
         saveTimer->stop();
         ui->updateBtn->click();
     } else {
         oneWireService->start();
-        DeviceInfo::need_registrate_1wire::set(1);
-        DeviceInfo::need_registrate_1wire::updated[0] = true;
+        app_info.need_registrate_1wire = 1;
 
         saveTimer->start(SAVE_TIMEOUT_MS);
     }
-    usbcontroller.saveInfo(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_SAVE_INFO;
+    usbcontroller.saveSettings(ui->serialPortSelect->currentText());
+    requestType = USB_REQUEST_SAVE_SETTINGS;
 }
 
 void QWidget::wheelEvent(QWheelEvent *event)

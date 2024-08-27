@@ -18,7 +18,7 @@
 #include "onewirebox.h"
 #include "sensorlist.h"
 #include "usbcontroller.h"
-#include "comtableworker.h"
+#include "tableworker.h"
 #include "onewireservice.h"
 
 
@@ -70,12 +70,6 @@ private slots:
     void on_updateBtn_clicked();
     void on_upgradeBtn_clicked();
 
-    void on_record_period_textChanged();
-
-    void on_send_period_textChanged();
-
-    void on_updateTimeBtn_clicked();
-
     void on_verticalScrollBar_valueChanged(int value);
 
     void onSaveTimeout();
@@ -86,10 +80,6 @@ private slots:
     void onOneWireRegister();
 
     void onUSBError(const QString& message);
-
-    void on_dumpBtn_clicked();
-
-    void onLoadLogProgressUpdated(uint32_t value);
 
     void on_serialPortSelect_activated(int index);
 

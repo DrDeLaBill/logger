@@ -1,0 +1,101 @@
+/* Copyright © 2023 Georgy E. All rights reserved. */
+
+#ifndef _SETTINGS_H_
+#define _SETTINGS_H_
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include <stdint.h>
+#include <stdbool.h>
+
+
+#define MODBUS_SENS_COUNT ((uint8_t)127)
+
+
+#define DEVICE_MAJOR (0)
+#define DEVICE_MINOR (1)
+#define DEVICE_PATCH (0)
+
+
+/*
+ * Device types:
+ * 0x0001 - Dispenser
+ * 0x0002 - Gas station
+ * 0x0003 - Logger
+ * 0x0004 - B.O.B.A.
+ * 0x0005 - Calibrate station
+ * 0x0006 - Dispenser-mini
+ */
+#define DEVICE_TYPE ((uint16_t)0x0003)
+#define SW_VERSION  ((uint8_t)0x01)
+#define FW_VERSION  ((uint8_t)0x01)
+#define CF_VERSION  ((uint8_t)0x01)
+
+
+typedef enum _SettingsStatus {
+    SETTINGS_OK = 0,
+    SETTINGS_ERROR
+} SettingsStatus;
+
+
+typedef enum _sensor_status_t {
+	SETTINGS_SENSOR_EMPTY    = (uint16_t)0x0000,
+	SETTINGS_SENSOR_THERMAL  = (uint16_t)0x0001,
+	SETTINGS_SENSOR_HUMIDITY = (uint16_t)0x0002,
+	SETTINGS_SENSOR_ANOTHER  = (uint16_t)0x4000,
+	SETTINGS_SENSOR_ERROR    = (uint16_t)0x8000,
+} sensor_status_t;
+
+
+typedef struct __attribute__((packed)) _settings_t  {
+	 // Device type
+	uint16_t dv_type;
+	 // Software version
+    uint8_t  sw_id;
+    // Firmware version
+    uint8_t  fw_id;
+    // Configuration version
+    uint32_t cf_id;
+    // Log record period time in ms
+	uint32_t record_period;
+    // Send record period time in ms
+	uint32_t send_period;
+	 // Last sended record ID
+	uint32_t record_id;
+
+	// The ID sensor on the bus is the N-1 index in the arrays
+	// MODBUS 1 sensors statuses
+	uint16_t modbus1_status   [MODBUS_SENS_COUNT];
+	// MODBUS 1 sensor register IDs for reading values
+	uint16_t modbus1_value_reg[MODBUS_SENS_COUNT];
+	// MODBUS 1 sensor register IDs for setting new sensor ids
+	uint16_t modbus1_id_reg   [MODBUS_SENS_COUNT];
+
+	// 1WIRE sensors
+	// 1WIRE sensors addresses
+	uint64_t _1wire_address[MODBUS_SENS_COUNT];
+} settings_t;
+
+
+extern settings_t settings;
+
+
+bool settings_check(settings_t* other);
+
+unsigned settings_1wire_index(const unsigned index);
+unsigned settings_modbus1_index(const unsigned index);
+
+uint8_t modbus1_index(uint8_t);
+uint8_t _1wire_index(uint8_t);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

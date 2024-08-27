@@ -7,10 +7,10 @@
 
 #include <QString>
 
-#include "log.h"
+#include "glog.h"
 #include "variables.h"
 
-#include "com_defs.h"
+#include "greport.h"
 #include "usbhreport.h"
 #include "usbdreport.h"
 #include "app_exception.h"
@@ -19,15 +19,16 @@
 #define COM_REPORT_DELAY_MS (1000)
 
 
-COMService::~COMService()
+std::unique_ptr<QSerialPort> COMService::port;
+std::string COMService::m_portName = "";
+
+
+void COMService::begin(const std::string& portName)
 {
     if (port && port->isOpen()) {
-        this->deinit();
+        deinit();
     }
-}
 
-void COMService::init(const std::string& portName)
-{
     port = std::make_unique<QSerialPort>();
 
     port->setPortName(QString(portName.c_str()));
@@ -41,10 +42,14 @@ void COMService::init(const std::string& portName)
         deinit();
         throw exceptions::UsbInitException();
     }
+
+    m_portName = portName;
 }
 
 void COMService::deinit()
 {
+    m_portName = "";
+
     if (!port) {
         return;
     }
@@ -58,7 +63,7 @@ void COMService::deinit()
     port.reset();
 }
 
-void COMService::sendReport(const report_pack_t& request)
+void COMService::sendReport(const pack_t& request)
 {
     USBHReport::createReport(request);
 
@@ -66,9 +71,9 @@ void COMService::sendReport(const report_pack_t& request)
         // printPretty("Reports:\n");
         // com_report_show(&(USBHReport::getReport()));
 
-        const QByteArray requestArray(reinterpret_cast<char*>(&(USBHReport::getReport())), sizeof(report_pack_t));
+        const QByteArray requestArray(reinterpret_cast<char*>(&(USBHReport::getReport())), sizeof(pack_t));
         qint64 res = port->write(requestArray);
-        if (res != sizeof(report_pack_t)) {
+        if (res != sizeof(pack_t)) {
             throw exceptions::UsbTimeoutException();
         }
 
@@ -86,11 +91,11 @@ void COMService::sendReport(const report_pack_t& request)
             port->clear();
         }
 
-        if (response.size() != sizeof(report_pack_t)) {
+        if (response.size() != sizeof(pack_t)) {
             throw exceptions::UsbReportException();
         }
 
-        report_pack_t reportPack;
+        pack_t reportPack;
         uint8_t* reportPack_ptr = reinterpret_cast<uint8_t*>(&reportPack);
         for (unsigned i = 0; i < response.size(); i++) {
             reportPack_ptr[i] = response[i];
@@ -101,7 +106,18 @@ void COMService::sendReport(const report_pack_t& request)
         port->clear();
 
         // com_report_show(&(USBDReport::getReport()));
+    } catch (const exceptions::UsbTimeoutException* exc) {
+        deinit();
+        throw;
     } catch (...) {
         throw;
     }
+}
+
+bool COMService::available()
+{
+    if (!port) {
+        return false;
+    }
+    return port->isOpen();
 }
