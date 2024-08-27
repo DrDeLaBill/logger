@@ -106,9 +106,6 @@ void COMService::sendReport(const pack_t& request)
         port->clear();
 
         // com_report_show(&(USBDReport::getReport()));
-    } catch (const exceptions::UsbTimeoutException* exc) {
-        deinit();
-        throw;
     } catch (...) {
         throw;
     }
