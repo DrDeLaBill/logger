@@ -43,8 +43,8 @@ USBController::~USBController()
 void USBController::loadSettings(const QString& port)
 {
     requestType = USB_REQUEST_LOAD_SETTINGS;
-    memset(reinterpret_cast<void*>(&settings), 0, sizeof(settings));
-    memset(reinterpret_cast<void*>(&app_info), 0, sizeof(app_info));
+    memset(reinterpret_cast<void*>(&settings_be), 0, sizeof(settings_be));
+    memset(reinterpret_cast<void*>(&app_info_be), 0, sizeof(app_info_be));
     emit request(requestType, port);
 }
 

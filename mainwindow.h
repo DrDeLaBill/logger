@@ -46,6 +46,8 @@ private:
     static QTimer* saveTimer;
     static QTimer* infoTimer;
 
+    static unsigned settingsHash;
+
     QString port;
 
     void showSettings(const USBRequestType type);

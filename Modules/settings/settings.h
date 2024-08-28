@@ -81,7 +81,8 @@ typedef struct __attribute__((packed)) _settings_t  {
 } settings_t;
 
 
-extern settings_t settings;
+extern settings_t settings_be;
+extern settings_t settings_ui;
 
 
 bool settings_check(settings_t* other);
