@@ -56,7 +56,7 @@ void USBController::saveSettings(const QString& port)
 
 void USBController::handleResults(const USBRequestType type, const USBCStatus status)
 {
-    if (status != USBC_RES_OK && status != USBC_RES_DONE) {
+    if (status != USBC_RES_DONE) {
         COMService::deinit();
         emit error(exceptions::USBExceptionGroup().message);
     }
@@ -69,7 +69,7 @@ void USBController::handleResults(const USBRequestType type, const USBCStatus st
 
 void USBWorker::proccess(const USBRequestType type, const QString& port)
 {
-    USBCStatus status = USBC_RES_OK;
+    USBCStatus status = USBC_WAIT;
 
     try {
         if (!COMService::available()) {

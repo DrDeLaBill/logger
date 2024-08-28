@@ -47,6 +47,7 @@ private:
     static QTimer* infoTimer;
 
     static unsigned settingsHash;
+    static bool needSave;
 
     QString port;
 

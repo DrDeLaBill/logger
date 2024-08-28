@@ -14,7 +14,7 @@ bool TableWorker::firstLoad = true;
 uint32_t TableWorker::curr_key = 0;
 uint32_t TableWorker::counter = 0;
 unsigned TableWorker::errors_count = 0;
-USBCStatus TableWorker::result = USBC_RES_OK;
+USBCStatus TableWorker::result = USBC_WAIT;
 uint8_t TableWorker::index = 0;
 utl::Timer TableWorker::timer(COM_DELAY_MS);
 std::unordered_map<uint32_t, gtuple> TableWorker::table = {
@@ -44,11 +44,11 @@ std::unordered_map<uint32_t, std::vector<uint32_t>> TableWorker::set_hashes;
 
 USBCStatus TableWorker::usbSessionProccess() const
 {
-    result = USBC_RES_OK;
+    result = USBC_IN_PROGRESS;
 
     do {
         fsm.proccess();
-    } while (result == USBC_RES_OK);
+    } while (result == USBC_IN_PROGRESS);
 
     return result;
 }

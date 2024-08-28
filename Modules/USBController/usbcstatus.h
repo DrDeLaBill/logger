@@ -4,8 +4,10 @@
 
 enum USBCStatus : unsigned
 {
-    // The part of the task is done
-    USBC_RES_OK = 0,
+    // The task is waiting
+    USBC_WAIT = 0,
+    // The tasks in progress
+    USBC_IN_PROGRESS,
     // The task is done
     USBC_RES_DONE,
     // USB error

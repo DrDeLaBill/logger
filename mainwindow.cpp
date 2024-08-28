@@ -34,6 +34,7 @@ QTimer* MainWindow::saveTimer;
 QTimer* MainWindow::infoTimer;
 
 unsigned MainWindow::settingsHash = 0;
+bool MainWindow::needSave = false;
 
 SensorList* MainWindow::modbus1ListBox;
 ModbusBox* MainWindow::firstmodbus1Sensor;
@@ -128,37 +129,12 @@ void MainWindow::on_updateBtn_clicked()
         return;
     }
 
-    clearSensors();
-    usbcontroller.loadSettings(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_LOAD_SETTINGS;
-}
-
-void MainWindow::on_upgradeBtn_clicked()
-{
-    if (saveTimer->isActive()) {
-        return;
-    }
-
-    app_info_ui.time = static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00);
-
-    settings_ui.record_period = ui->record_period->toPlainText().toUInt();
-    settings_ui.send_period = ui->send_period->toPlainText().toUInt();
-
-    memcpy((uint8_t*)&settings_be, (uint8_t*)&settings_ui, sizeof(settings_be));
-
-    saveTimer->start(SAVE_TIMEOUT_MS);
-    MainWindow::setLoading();
-    usbcontroller.saveSettings(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_SAVE_SETTINGS;
-}
-
-void MainWindow::onInfoTimeout()
-{
-    if (saveTimer->isActive()) {
+    if (needSave) {
         return;
     }
 
     if (requestType == USB_REQUEST_NONE) {
+        clearSensors();
         usbcontroller.loadSettings(ui->serialPortSelect->currentText());
         requestType = USB_REQUEST_LOAD_SETTINGS;
     }
@@ -170,6 +146,40 @@ void MainWindow::onInfoTimeout()
     if (infoTimer) {
         infoTimer->stop();
     }
+}
+
+void MainWindow::on_upgradeBtn_clicked()
+{
+    if (saveTimer->isActive()) {
+        return;
+    }
+
+    if (requestType == USB_REQUEST_NONE) {
+        app_info_ui.time = static_cast<uint32_t>(std::time(nullptr) - TIMESTAMP2000_01_01_00_00_00);
+
+        settings_ui.record_period = ui->record_period->toPlainText().toUInt();
+        settings_ui.send_period = ui->send_period->toPlainText().toUInt();
+
+        memcpy((uint8_t*)&settings_be, (uint8_t*)&settings_ui, sizeof(settings_be));
+        memcpy((uint8_t*)&app_info_be, (uint8_t*)&app_info_ui, sizeof(app_info_be));
+
+        saveTimer->start(SAVE_TIMEOUT_MS);
+        MainWindow::setLoading();
+        usbcontroller.saveSettings(ui->serialPortSelect->currentText());
+        requestType = USB_REQUEST_SAVE_SETTINGS;
+        needSave = false;
+    } else {
+        needSave = true;
+    }
+}
+
+void MainWindow::onInfoTimeout()
+{
+    if (saveTimer->isActive()) {
+        return;
+    }
+
+    ui->updateBtn->click();
 }
 
 void MainWindow::onSaveTimeout()
@@ -251,7 +261,9 @@ void MainWindow::responseProccess(const USBRequestType type, const USBCStatus st
         break;
     }
 
-    if (!infoTimer->isActive()) {
+    if (needSave) {
+        ui->upgradeBtn->click();
+    } else if (!infoTimer->isActive()) {
         infoTimer->start(INFO_TIMEOUT_MS);
     }
 }
@@ -629,17 +641,13 @@ void MainWindow::onOneWireRegister()
     if (oneWireService->isRegistratinig()) {
         oneWireService->stop();
         app_info_ui.need_registrate_1wire = 0;
-
         saveTimer->stop();
         ui->updateBtn->click();
     } else {
         oneWireService->start();
         app_info_ui.need_registrate_1wire = 1;
-
-        saveTimer->start(SAVE_TIMEOUT_MS);
     }
-    usbcontroller.saveSettings(ui->serialPortSelect->currentText());
-    requestType = USB_REQUEST_SAVE_SETTINGS;
+    ui->upgradeBtn->click();
 }
 
 void QWidget::wheelEvent(QWheelEvent *event)
