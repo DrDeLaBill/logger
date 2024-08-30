@@ -24,18 +24,18 @@ std::unordered_map<uint32_t, gtuple> TableWorker::table = {
     {GP_KEY_STR("record_period"),         {(uint8_t*)(&settings_be.record_period),         sizeof(settings_be.record_period)}},
     {GP_KEY_STR("send_period"),           {(uint8_t*)(&settings_be.send_period),           sizeof(settings_be.send_period)}},
     {GP_KEY_STR("record_id"),             {(uint8_t*)(&settings_be.record_id),             sizeof(settings_be.record_id)}},
-    {GP_KEY_STR("modbus1_status"),        {(uint8_t*)(&settings_be.modbus1_status),        sizeof(settings_be.modbus1_status[0]),       __arr_len(settings_be.modbus1_status),     modbus1_index}},
-    {GP_KEY_STR("modbus1_value_reg"),     {(uint8_t*)(&settings_be.modbus1_value_reg),     sizeof(settings_be.modbus1_value_reg[0]),    __arr_len(settings_be.modbus1_value_reg),  modbus1_index}},
-    {GP_KEY_STR("modbus1_id_reg"),        {(uint8_t*)(&settings_be.modbus1_id_reg),        sizeof(settings_be.modbus1_id_reg[0]),       __arr_len(settings_be.modbus1_id_reg),     modbus1_index}},
-    {GP_KEY_STR("_1wire_address"),        {(uint8_t*)(&settings_be._1wire_address),        sizeof(settings_be._1wire_address[0]),       __arr_len(settings_be._1wire_address),     _1wire_index}},
+    {GP_KEY_STR("modbus1_status"),        {(uint8_t*)(&settings_be.modbus1_status),        sizeof(settings_be.modbus1_status[0]),       __arr_len(settings_be.modbus1_status),     modbus1_index_be}},
+    {GP_KEY_STR("modbus1_value_reg"),     {(uint8_t*)(&settings_be.modbus1_value_reg),     sizeof(settings_be.modbus1_value_reg[0]),    __arr_len(settings_be.modbus1_value_reg),  modbus1_index_be}},
+    {GP_KEY_STR("modbus1_id_reg"),        {(uint8_t*)(&settings_be.modbus1_id_reg),        sizeof(settings_be.modbus1_id_reg[0]),       __arr_len(settings_be.modbus1_id_reg),     modbus1_index_be}},
+    {GP_KEY_STR("_1wire_address"),        {(uint8_t*)(&settings_be._1wire_address),        sizeof(settings_be._1wire_address[0]),       __arr_len(settings_be._1wire_address),     _1wire_index_be}},
     {GP_KEY_STR("mb1_last_id"),           {(uint8_t*)(&app_info_be.mb1_last_id),           sizeof(app_info_be.mb1_last_id)}},
     {GP_KEY_STR("mb1_new_id"),            {(uint8_t*)(&app_info_be.mb1_new_id),            sizeof(app_info_be.mb1_new_id)}},
     {GP_KEY_STR("need_mb1_id_update"),    {(uint8_t*)(&app_info_be.need_mb1_id_update),    sizeof(app_info_be.need_mb1_id_update)}},
     {GP_KEY_STR("time"),                  {(uint8_t*)(&app_info_be.time),                  sizeof(app_info_be.time)}},
     {GP_KEY_STR("need_registrate_1wire"), {(uint8_t*)(&app_info_be.need_registrate_1wire), sizeof(app_info_be.need_registrate_1wire)}},
-    {GP_KEY_STR("modbus1_last_value"),    {(uint8_t*)(&app_info_be.modbus1_last_value),    sizeof(app_info_be.modbus1_last_value[0]),   __arr_len(app_info_be.modbus1_last_value), modbus1_index}},
-    {GP_KEY_STR("_1wire_last_value"),     {(uint8_t*)(&app_info_be._1wire_last_value),     sizeof(app_info_be._1wire_last_value[0]),    __arr_len(app_info_be._1wire_last_value),  _1wire_index}},
-    {GP_KEY_STR("_1wire_registrate"),     {(uint8_t*)(&app_info_be._1wire_registrate),     sizeof(app_info_be._1wire_registrate[0]),    __arr_len(app_info_be._1wire_registrate),  _1wire_index}},
+    {GP_KEY_STR("modbus1_last_value"),    {(uint8_t*)(&app_info_be.modbus1_last_value),    sizeof(app_info_be.modbus1_last_value[0]),   __arr_len(app_info_be.modbus1_last_value), modbus1_index_be}},
+    {GP_KEY_STR("_1wire_last_value"),     {(uint8_t*)(&app_info_be._1wire_last_value),     sizeof(app_info_be._1wire_last_value[0]),    __arr_len(app_info_be._1wire_last_value),  _1wire_index_be}},
+    {GP_KEY_STR("_1wire_registrate"),     {(uint8_t*)(&app_info_be._1wire_registrate),     sizeof(app_info_be._1wire_registrate[0]),    __arr_len(app_info_be._1wire_registrate),  _1wire_index_be}},
 };
 gprotocol TableWorker::protocol(table);
 std::unordered_map<uint32_t, std::vector<uint32_t>> TableWorker::get_hashes;
@@ -200,7 +200,7 @@ void TableWorker::init_upgrade_a::operator()(void) const
     while (counter < table.size()) {
         while (index < table.at(curr_key).length() &&
                set_hashes[curr_key].at(index) == value_hash(protocol.get(curr_key, index))
-               ) {
+        ) {
             index++;
         }
 
@@ -243,10 +243,9 @@ void TableWorker::iterate_upgrade_a::operator()(void) const
     index++;
 
     while (counter < table.size()) {
-
         while (index < table.at(curr_key).length() &&
                set_hashes[curr_key].at(index) == value_hash(protocol.get(curr_key, index))
-               ) {
+        ) {
             index++;
         }
 

@@ -90,8 +90,10 @@ bool settings_check(settings_t* other);
 unsigned settings_1wire_index(const unsigned index);
 unsigned settings_modbus1_index(const unsigned index);
 
-uint8_t modbus1_index(uint8_t);
-uint8_t _1wire_index(uint8_t);
+uint8_t modbus1_index_be(uint8_t);
+uint8_t _1wire_index_be(uint8_t);
+uint8_t modbus1_index_ui(uint8_t);
+uint8_t _1wire_index_ui(uint8_t);
 
 
 #ifdef __cplusplus

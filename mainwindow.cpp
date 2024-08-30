@@ -134,7 +134,10 @@ void MainWindow::on_updateBtn_clicked()
     }
 
     if (requestType == USB_REQUEST_NONE) {
+        settingsHash = 0;
         clearSensors();
+    }
+    if (requestType == USB_REQUEST_NONE || requestType == USB_REQUEST_LOAD_INFO) {
         usbcontroller.loadSettings(ui->serialPortSelect->currentText());
         requestType = USB_REQUEST_LOAD_SETTINGS;
     }
@@ -179,6 +182,7 @@ void MainWindow::onInfoTimeout()
         return;
     }
 
+    requestType = USB_REQUEST_LOAD_INFO;
     ui->updateBtn->click();
 }
 
@@ -390,6 +394,8 @@ void MainWindow::setONEWIREHidden(bool state)
     } else {
         ui->onewireHeader->show();
         onewireListBox->sensors_group->show();
+
+        showOneWireSensors();
     }
 }
 
@@ -475,7 +481,7 @@ void MainWindow::showSettings(const USBRequestType type)
 
     clearSensors();
     for (unsigned  i = 0; i < __arr_len(settings_ui.modbus1_status); i++) {
-        i = modbus1_index(i);
+        i = modbus1_index_ui(i);
 
         if (i >= __arr_len(settings_ui.modbus1_status)) {
             break;
@@ -509,7 +515,9 @@ void MainWindow::showSettings(const USBRequestType type)
         }
     }
 
-    showOneWireSensors();
+    if (!onewireListBox->sensors_group->isHidden()) {
+        showOneWireSensors();
+    }
 
     updateScrollBar();
 }
@@ -520,7 +528,7 @@ void MainWindow::showOneWireSensors()
 
     int offset = oneWireService->getY();
     for (unsigned  i = 0; i < __arr_len(settings_ui._1wire_address); i++) {
-        i = _1wire_index(i);
+        i = _1wire_index_ui(i);
 
         if (i >= __arr_len(settings_ui._1wire_address)) {
             break;
@@ -537,11 +545,9 @@ void MainWindow::showOneWireSensors()
         });
     }
 
-    if (!onewireListBox->sensors_group->isHidden()) {
-        onewireListBox->sensors_group->show();
-        for (unsigned i = 0; i < oneWireSensors.size(); i++) {
-            oneWireSensors.at(i).show();
-        }
+    onewireListBox->sensors_group->show();
+    for (unsigned i = 0; i < oneWireSensors.size(); i++) {
+        oneWireSensors.at(i).show();
     }
 
     updateScrollBar();
